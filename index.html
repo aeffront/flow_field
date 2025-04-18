@@ -1,0 +1,72 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Offside&family=Quicksand:wght@300..700&family=Rubik+Mono+One&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Special+Gothic+Expanded+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="./src/style.css">
+</head>
+<body>
+  <div id="landing_text">
+    <h1>WELCOME </h1>
+    <p>Press h for help</p>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const landingText = document.getElementById("landing_text")
+        window.addEventListener('click', function() {
+          Array.from(landingText.childNodes).forEach(child => {
+            if (child.nodeType === Node.ELEMENT_NODE) {
+              child.classList.add("hide");
+            }
+          });
+          
+        });
+        
+      });
+    </script>
+  </div>
+  
+  
+  <div id="keys">
+    <h1 id="keys_title">SHORTCUTS</h1>
+    <table id="keys_table">
+      <tr>
+        <td>SPACE : </td>
+        <td>pause</td>
+        
+      </tr>
+      <tr>
+        <td>M : </td>
+        <td>mute</td>
+      </tr>
+        <tr>
+        <td>R : </td>
+        <td>reset</td>
+        </tr>
+      <tr>
+        <td>N : </td>
+        <td>new agent</td>
+      </tr>
+      <tr>
+        <td>D : </td>
+        <td>toggle debug view</td>
+      </tr>
+
+     
+    </table>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const keysTitle = document.getElementById("keys_title")
+        const keys_table = document.getElementById("keys_table")
+        keysTitle.addEventListener('click', function() {
+          keys_table.classList.toggle("hidden");
+        });
+        
+      });
+    </script>
+  </div>
+  <script src="./src/main6.js" type="module"></script>
+</body>
+</html>

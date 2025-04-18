@@ -1,0 +1,23 @@
+{
+  "name": "flow_field",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "electron ."
+  },
+  "main": "main.js",
+  "devDependencies": {
+    "vite": "^6.2.0",
+    "electron": "^25.0.0"
+  },
+  "dependencies": {
+    "dat.gui": "^0.7.9",
+    "electron": "^35.1.5",
+    "lottie-web": "^5.12.2",
+    "tone": "^15.0.4"
+  }
+}
