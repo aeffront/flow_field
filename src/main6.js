@@ -1,18 +1,42 @@
 // Refactored version of your code
 import * as Tone from 'tone';
 
-import {Cell,Agent, Instrument} from './classes.js';
+import {Cell,Agent, Instrument,lofiOutput} from './classes.js';
+
+const rythms = [
+  {
+    kickPattern : [true, false, false, false, true, false, false, false,true, false, true, false, true, false, false, false],
+  snarePattern : [false, false, false, false, true, false, false, false,false, false, false, false, true, false, false, true],
+  hihatPattern : [true, true, true, true, true, true, true, true,true, true, true, true, true, true, true, true],
+  },
+  {
+    kickPattern : [true, false, true, false, true, false, false, false,true, false, true, false, true, false, true, true],
+  snarePattern : [false, true, false, false, false, true, false, false,false, false, false, false, true, false, false, true],
+  hihatPattern : [true, true, true, true, true, true, true, true,true, true, true, true, true, true, true, true],
+  }
+]
+
+function getRandomRythm(){
+  return rythms[Math.floor(Math.random() * rythms.length)];
+  //return rythms[1];
+}
 
 let pixelDensity = 2;
 let debug = false;
-let numInstrumentTypes = 2;
+let numInstrumentTypes = 3;
 let type = Math.floor(Math.random() * numInstrumentTypes);
+
+const kickPlayer = new Tone.Player('./public/lofi_samples/kick.wav').connect(lofiOutput.input);
+const snarePlayer = new Tone.Player('./public/lofi_samples/snare.wav').connect(lofiOutput.input);
+const hihatPlayer = new Tone.Player('./public/lofi_samples/hh.wav').connect(lofiOutput.input);
 
 const definition = 50*pixelDensity;
 const notes = [
-  'Db3', 'Eb3', 'F3', 'Gb3', 'Ab3', 'Bb3', 'C4',
-  'Db4', 'Eb4', 'F4', 'Gb4', 'Ab4', 'Bb4', 'C5',
-  'Db5', 'Eb5', 'F5', 'Gb5', 'Ab5', 'Bb5', 'C6'
+  ['C2','Db2', 'Eb2', 'F2', 'Gb2', 'Ab2', 'Bb2'],
+  ['C3','Db3', 'Eb3', 'F3', 'Gb3', 'Ab3', 'Bb3'],
+  ['C4','Db4', 'Eb4', 'F4', 'Gb4', 'Ab4', 'Bb4'],
+  ['C5','Db5', 'Eb5', 'F5', 'Gb5', 'Ab5', 'Bb5'],
+  ['C6','Db6', 'Eb6', 'F6', 'Gb6', 'Ab6', 'Bb6']
 ];
 const isConstant = false;
 const penIsActive = true;
@@ -30,6 +54,9 @@ let colors = palets[Math.floor(Math.random() * palets.length)];
 document.getElementById('keys').style.color = colors[0];
   document.getElementById('keys').style.backgroundColor = colors[1];
   document.getElementById('keys_table').style.color = colors[0];
+  document.getElementById('instrument_selector').style.backgroundColor = colors[1];
+  document.getElementById('instrument_selector').style.color = colors[0];
+  document.getElementById('instrument_selector').style.boder = `1px solid ${colors[0]}`;
 
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d');
@@ -42,6 +69,22 @@ const height = canvas.height;
 let numCols = Math.floor(width / definition);
 let numRows = Math.floor(height / definition);
 
+function getNote(notes,u,v){
+  let posY = Math.floor(v/numRows);
+  let posX = Math.floor(u/numCols);
+
+  let octDepth = numRows/notes.length;
+  let noteDepth = numCols/notes[0].length;
+
+  let oct = posY*octDepth;
+  let noteIndex = posX*noteDepth;
+
+  let note = notes[oct][noteIndex]
+
+  return note;
+
+}
+
 let restWidth = width % definition;
 let restHeight = height % definition;
 
@@ -53,7 +96,7 @@ function buildField() {
   for (let i = 0; i < numCols; i++) {
     let row = [];
     for (let j = 0; j < numRows; j++) {
-      row.push(new Cell(i * definition, j * definition, isConstant ? 1 : 0, 0,restWidth, restHeight, definition, colors));
+      row.push(new Cell(i,j,i * definition, j * definition, isConstant ? 1 : 0, 0,restWidth, restHeight, definition, colors));
     }
     cells.push(row);
   }
@@ -65,7 +108,7 @@ let cells = buildField();
 function createAgent(){
   let timeSignatures = ['2n', '4n', '8n'];
   let randomTimeSignature = timeSignatures[Math.floor(Math.random() * timeSignatures.length)];
-  let randomOctave = Math.floor(Math.random() * 6) - 2;
+  let randomOctave = Math.floor(Math.random() * 2) - 4;
   let randomType = type;
 
   let agent = new Agent(cells, new Instrument(randomType, randomTimeSignature, randomOctave), definition, numCols, numRows);
@@ -178,18 +221,36 @@ function main() {
 
 // ---------------------------- Audio Start ----------------------------
 function startAudio() {
-  
-  
-
   Tone.start();
   Tone.Transport.start();
+  Tone.Transport.cancel();
   agents.forEach(agent => {
     Tone.Transport.scheduleRepeat(() => agent.play(notes), agent.instrument.noteLength);
   });
-  Tone.Transport.swing = 0.5;
+  Tone.Transport.swing = 0.;
   Tone.Transport.swingSubdivision = '16n';
   main();
   window.removeEventListener('click', startAudio);
+
+  let pattern = getRandomRythm();
+
+  let kickPattern = pattern.kickPattern;
+  let snarePattern= pattern.snarePattern;
+  let hihatPattern= pattern.hihatPattern;
+  let step = 0;
+
+  Tone.Transport.scheduleRepeat(() => {
+    if (kickPattern[step]) {
+      kickPlayer.start();
+    }
+    if (snarePattern[step]) {
+      snarePlayer.start();
+    }
+    if (hihatPattern[step]) {
+      hihatPlayer.start();
+    }
+    step = (step + 1) % kickPattern.length;
+  }, '8n');
 }
 
 function stopAudio() {
@@ -217,7 +278,10 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'r') {
     
       stopAudio();
-      document.body.removeChild(document.querySelector('.agent'));
+      const agentElement = document.querySelector('.agent');
+      if (agentElement) {
+        document.body.removeChild(agentElement);
+      }
       type = Math.floor(Math.random() * numInstrumentTypes);
       agents.forEach(agent => {
         agent.animation.destroy();
@@ -229,6 +293,8 @@ window.addEventListener('keydown', (e) => {
       }));
 
       ctx.clearRect(0, 0, width, height);
+      type = Math.floor(Math.random() * numInstrumentTypes);
+      colors = palets[Math.floor(Math.random() * palets.length)];
       
   }
   if (e.key === 'm') {

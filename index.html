@@ -3,9 +3,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <!-- <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Offside&family=Quicksand:wght@300..700&family=Rubik+Mono+One&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Special+Gothic+Expanded+One&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Offside&family=Quicksand:wght@300..700&family=Rubik+Mono+One&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Special+Gothic+Expanded+One&display=swap" rel="stylesheet"> -->
   <link rel="stylesheet" type="text/css" href="./src/style.css">
 </head>
 <body>
@@ -53,9 +53,20 @@
         <td>D : </td>
         <td>toggle debug view</td>
       </tr>
+      <tr>
+        <td>Instrument : </td>
+        <td>
+          <select id="instrument_selector">
+          <option value="Piano">Piano</option>
+          <option value="Guitar">Guitar</option>
+          <option value="Synth">Synth</option>
+        </select>
+      </td>
+      </tr>
 
      
     </table>
+    
     <script>
       document.addEventListener("DOMContentLoaded", function() {
         const keysTitle = document.getElementById("keys_title")
