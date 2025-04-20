@@ -294,6 +294,8 @@ class Instrument {
         break;
       case "Synth":
         this.baseUrl = './public/guitare_samples/';
+      case "Vox":
+        this.baseUrl = './public/vox_samples/'
     }
 
     console.log('Initial instrument selector value:', document.getElementById('instrument_selector').value, 'Base URL:', this.baseUrl);
@@ -309,6 +311,8 @@ class Instrument {
           break;
         case "Synth":
           this.baseUrl = './public/guitare_samples/';
+        case "Vox":
+        this.baseUrl = './public/vox_samples/'
       }
     });
 
