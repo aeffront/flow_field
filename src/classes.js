@@ -107,24 +107,69 @@ class Cell {
     }
     else{
 
-      
-      let colorIndex = this.vx === 1 ? 0 : this.vx === -1 ? 1 : 2;
-      ctx.fillStyle = colors[colorIndex];
       if(this.vx == 0 && this.vy == 0){
         ctx.fillStyle = 'white';
+        ctx.fillRect(this.x, this.y, definition, definition);
       }
-      ctx.beginPath();
-      ctx.roundRect(this.x, this.y, definition, definition, 0
-      );
-      ctx.fill();
+      if(this.vx==1){
+        ctx.fillStyle = 'rgb(0, 189, 0)';
+        ctx.fillRect(this.x, this.y, definition, definition);
 
-      ctx.save();
-      ctx.translate(this.x + definition / 2, this.y + definition / 2);
-      if (this.vx !== 0 || this.vy !== 0) {
-        ctx.rotate(Math.atan2(this.vy, this.vx)+Math.PI);
+        if(this.vy == 1){
+        ctx.fillStyle = 'grey';
+        ctx.fillRect(this.x, this.y, definition/2, definition/2);
+        ctx.fillRect(this.x+definition/2, this.y+definition/2, definition/2, definition/2);
+        }else if(this.vy == -1){
+          ctx.fillStyle = 'black';
+          ctx.fillRect(this.x, this.y, definition/2, definition/2);
+          ctx.fillRect(this.x+definition/2, this.y+definition/2, definition/2, definition/2);
+        }
+       
       }
-      //ctx.drawImage(this.img, -definition / 2, -definition / 2, definition, definition);
-      ctx.restore();
+      else if(this.vx==-1){
+        ctx.fillStyle = 'rgb(226, 138, 79)';
+        ctx.fillRect(this.x, this.y, definition, definition);
+        if(this.vy == 1){
+          ctx.fillStyle = 'rgb(125, 125, 125)';
+          ctx.fillRect(this.x, this.y, definition/2, definition/2);
+          ctx.fillRect(this.x+definition/2, this.y+definition/2, definition/2, definition/2);
+        }else if(this.vy == -1){
+          ctx.fillStyle = 'rgb(0, 0, 0)';
+          ctx.fillRect(this.x, this.y, definition/2, definition/2);
+          ctx.fillRect(this.x+definition/2, this.y+definition/2, definition/2, definition/2);
+        }
+       
+      }
+      else if(this.vx == 0 && this.vy != 0){
+        if(this.vy == 1){
+          ctx.fillStyle = 'rgb(135, 135, 135)';
+          ctx.fillRect(this.x, this.y, definition, definition);
+        }
+        else if(this.vy == -1){
+          ctx.fillStyle = 'rgb(0, 0, 0)';
+          ctx.fillRect(this.x, this.y, definition, definition);
+        }
+      }
+
+
+      
+      // let colorIndex = this.vx === 1 ? 0 : this.vx === -1 ? 1 : 2;
+      // ctx.fillStyle = colors[colorIndex];
+      // if(this.vx == 0 && this.vy == 0){
+      //   ctx.fillStyle = 'white';
+      // }
+      // ctx.beginPath();
+      // ctx.roundRect(this.x, this.y, definition, definition, 0
+      // );
+      // ctx.fill();
+
+      // ctx.save();
+      // ctx.translate(this.x + definition / 2, this.y + definition / 2);
+      // if (this.vx !== 0 || this.vy !== 0) {
+      //   ctx.rotate(Math.atan2(this.vy, this.vx)+Math.PI);
+      // }
+      // //ctx.drawImage(this.img, -definition / 2, -definition / 2, definition, definition);
+      // ctx.restore();
 
       
     }
@@ -167,6 +212,8 @@ class Agent {
       name: "agentAnim"
     });
 
+    
+
     document.body.appendChild(this.el);
   }
 
@@ -193,10 +240,10 @@ class Agent {
     this.closestCell = cell;
     if (!cell) return;
 
-    this.vx *= 0.9;
-    this.vy *= 0.9;
-    this.vx += cell.vx * 0.3;
-    this.vy += cell.vy * 0.3;
+    this.vx *= 0.95;
+    this.vy *= 0.95;
+    this.vx += cell.vx * 0.4;
+    this.vy += cell.vy * 0.4;
 
     this.x = (this.x + this.vx + window.innerWidth*2) %  (window.innerWidth*2);
     this.y = (this.y + this.vy + window.innerHeight*2) % (window.innerHeight*2);
@@ -259,7 +306,9 @@ class Agent {
 }
 
 class Instrument {
-  constructor(type = 0, noteLength = '64n', octave = 3) {
+  constructor(type = 0, noteLength = '64n', octave = 3,agent) {
+    this.agent = agent;
+    this.agentColor;
     this.type = type;
     this.noteLength = noteLength;
     this.octave = octave-10;
@@ -288,15 +337,38 @@ class Instrument {
     switch (document.getElementById('instrument_selector').value) {
       case "Piano":
         this.baseUrl = './public/piano_samples/';
+        this.agentColor = 'red';
         break;
       case "Guitar":
         this.baseUrl = './public/synth_samples/';
+        this.agentColor = 'blue';
         break;
       case "Synth":
         this.baseUrl = './public/guitare_samples/';
+        this.agentColor = 'green';
       case "Vox":
-        this.baseUrl = './public/vox_samples/'
+        this.baseUrl = './public/vox_samples/';
+        this.agentColor = 'yellow';
+      case "Bass":
+        this.baseUrl = './public/bass_samples/';
+        this.agentColor = 'purple';
     }
+
+    // Ensure the element and its children are loaded before modifying styles
+    setTimeout(() => {
+      Array.from(this.agent.el.children).forEach((child) => {
+        const shapes = child.querySelectorAll('path');
+        if (shapes.length > 0) {
+          shapes.forEach((shape) => {
+            shape.style.fill =  this.agentColor ;
+          });
+        } else {
+          console.warn('No <path> elements found in child:', child);
+        }
+      });
+    }, 100); // Delay to ensure elements are rendered
+
+    
 
     console.log('Initial instrument selector value:', document.getElementById('instrument_selector').value, 'Base URL:', this.baseUrl);
 
@@ -312,7 +384,9 @@ class Instrument {
         case "Synth":
           this.baseUrl = './public/guitare_samples/';
         case "Vox":
-        this.baseUrl = './public/vox_samples/'
+          this.baseUrl = './public/vox_samples/'
+        case "Bass":
+          this.baseUrl = './public/bass_samples/';
       }
     });
 

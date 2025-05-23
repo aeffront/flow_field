@@ -47,6 +47,8 @@ button{
 }
 
 #landing_text h1{
+    margin:0 ;
+    padding:0 ;
     position: fixed;
     top: 40%;
     left: 50%;
@@ -62,7 +64,6 @@ button{
     pointer-events: none;
 
     -webkit-text-stroke: 0.5px rgb(0, 0, 0);
-    filter: drop-shadow(10px 10px 0 black);
 
     opacity: 1;
 
@@ -109,30 +110,134 @@ button{
 
 #keys{
     position: fixed;
-    bottom: 20px;
-    left: 10px;
+    top: 0;
+    left: 0;
     z-index: 1000;
-    font-family: "Rubik Mono One", monospace;
-    font-weight: 400;
+    font-family: "SF Mono", monospace;
+    font-weight: "light";
     font-size: 10px;
-    background-color: rgba(255, 255, 255, 0.568);
-    padding: 10px;
+    background-color: rgb(114, 114, 114);
     display: none;
+    align-items: center;
+    justify-content: center;
     border: 0.5px solid black;
-    filter : drop-shadow(10px 10px 0 black);
+    width: 350px;
 }
 
 #keys_table {
+    position: relative;
+    top: -50px;
+    left: 0;
     display: flex;
     align-items: center;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin: 0 auto;
     padding: 0;
-    color: royalblue;
+    color: rgb(0, 0, 0);
 }
 
+#keys_title{
+    position: relative;
+    top: 0;
+    padding-left: 10px;
+    font-family: "SF Mono", monospace;
+    font-weight: "heavy";
+    font-size: 90px;
+    color: rgb(168, 168, 168);
+    padding-bottom: 20px;
+    border-bottom: 1px solid black;
+
+}
+
+@font-face {
+    font-family: 'SF Mono';
+    src: url('./public/font/SF-Mono-Bold.otf') format('opentype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SF Mono';
+    src: url('./public/font/SF-Mono-BoldItalic.otf') format('opentype');
+    font-weight: bold;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'SF Mono';
+    src: url('./public/font/SF-Mono-Heavy.otf') format('opentype');
+    font-weight: 900;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SF Mono';
+    src: url('./public/font/SF-Mono-HeavyItalic.otf') format('opentype');
+    font-weight: 900;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'SF Mono';
+    src: url('./public/font/SF-Mono-Light.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SF Mono';
+    src: url('./public/font/SF-Mono-LightItalic.otf') format('opentype');
+    font-weight: 300;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'SF Mono';
+    src: url('./public/font/SF-Mono-Medium.otf') format('opentype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SF Mono';
+    src: url('./public/font/SF-Mono-MediumItalic.otf') format('opentype');
+    font-weight: 500;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'SF Mono';
+    src: url('./public/font/SF-Mono-Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SF Mono';
+    src: url('./public/font/SF-Mono-RegularItalic.otf') format('opentype');
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'SF Mono';
+    src: url('./public/font/SF-Mono-Semibold.otf') format('opentype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SF Mono';
+    src: url('./public/font/SF-Mono-SemiboldItalic.otf') format('opentype');
+    font-weight: 600;
+    font-style: italic;
+}
+
+/* Example usage */
+body {
+    font-family: 'SF Mono', monospace;
+}
 
 
 

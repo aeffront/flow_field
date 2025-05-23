@@ -25,10 +25,15 @@ let pixelDensity = 2;
 let debug = false;
 let numInstrumentTypes = 3;
 let type = Math.floor(Math.random() * numInstrumentTypes);
+let percussionsIsMute = true;
 
 const kickPlayer = new Tone.Player('./public/lofi_samples/kick.wav').connect(lofiOutput.input);
 const snarePlayer = new Tone.Player('./public/lofi_samples/snare.wav').connect(lofiOutput.input);
 const hihatPlayer = new Tone.Player('./public/lofi_samples/hh.wav').connect(lofiOutput.input);
+
+kickPlayer.mute = percussionsIsMute;
+snarePlayer.mute = percussionsIsMute;
+hihatPlayer.mute = percussionsIsMute;
 
 const definition = 50*pixelDensity;
 const notes = [
@@ -51,12 +56,7 @@ let palets = [
 
 let colors = palets[Math.floor(Math.random() * palets.length)];
 
-document.getElementById('keys').style.color = colors[0];
-  document.getElementById('keys').style.backgroundColor = colors[1];
-  document.getElementById('keys_table').style.color = colors[0];
-  document.getElementById('instrument_selector').style.backgroundColor = colors[1];
-  document.getElementById('instrument_selector').style.color = colors[0];
-  document.getElementById('instrument_selector').style.boder = `1px solid ${colors[0]}`;
+
 
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d');
@@ -111,7 +111,10 @@ function createAgent(){
   let randomOctave = Math.floor(Math.random() * 2) - 4;
   let randomType = type;
 
-  let agent = new Agent(cells, new Instrument(randomType, randomTimeSignature, randomOctave), definition, numCols, numRows);
+  let agent = new Agent(cells, null, definition, numCols, numRows);
+  agent.x = globalMousePos.x;
+  agent.y = globalMousePos.y;
+  agent.instrument = new Instrument(randomType, randomTimeSignature, randomOctave,agent);
   agents.push(agent);
 
 }
@@ -120,11 +123,18 @@ let agents = [];
 
 // ---------------------------- Interaction ----------------------------
 let mousePosA, mousePosB;
+let globalMousePos = { x: 0, y: 0 };
 
 function getMouseDirection() {
+  const vx = (mousePosA.x - mousePosB.x) * 0.01;
+  const vy = (mousePosA.y - mousePosB.y) * 0.01;
+
+  const magnitude = Math.sqrt(vx * vx + vy * vy);
+
+  console.log(vx, vy, magnitude);
   return {
-    vx: (mousePosA.x - mousePosB.x) * 0.1,
-    vy: (mousePosA.y - mousePosB.y) * 0.1
+    vx: magnitude > 0 ? vx / magnitude : 0,
+    vy: magnitude > 0 ? vy / magnitude : 0
   };
 }
 
@@ -142,8 +152,19 @@ function onMouseMove(e) {
   for (let i = -1; i <= 1; i++) {
     for (let j = -1; j <= 1; j++) {
       if (cells[x + i] && cells[x + i][y + j]) {
-        cells[x + i][y + j].vx = Math.sign(vx);
-        cells[x + i][y + j].vy = Math.sign(vy);
+
+        let signX = Math.sign(vx);
+        let signY = Math.sign(vy);
+
+        let valX = Math.round(vx);
+        let valY = Math.round(vy);
+
+        valX = valX === 0 ? signX : valX;
+        valY = valY === 0 ? signY : valY;
+
+
+        cells[x + i][y + j].vx = valX;
+        cells[x + i][y + j].vy = valY;
       }
     }
   }
@@ -188,6 +209,10 @@ window.addEventListener('keydown', (e) => {
     dampening.factor -= 0.1;
   }
 });
+
+window.addEventListener('mousemove',(e)=>{
+  globalMousePos = getMousePos(e);
+})
 
 // ---------------------------- Animation ----------------------------
 function damp() {
@@ -304,6 +329,22 @@ window.addEventListener('keydown', (e) => {
     if(document.getElementById('keys').style.display=="block")document.getElementById('keys').style.display = 'none';
     else document.getElementById('keys').style.display = 'block';
 
+  }
+  if(e.key =='p'){
+    console.log("p")
+    percussionsIsMute = !percussionsIsMute;
+
+    if(percussionsIsMute){
+      kickPlayer.mute = true;
+      hihatPlayer.mute = true;
+      snarePlayer.mute = true;
+    }
+    else{
+      kickPlayer.mute = false;
+      hihatPlayer.mute = false;
+      snarePlayer.mute = false;
+
+    }
   }
 
 });
