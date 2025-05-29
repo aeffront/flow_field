@@ -1,7 +1,29 @@
 // Refactored version of your code
 // import * as Tone from 'tone';
 
-import {Cell,Agent, Instrument,lofiOutput,borderCanvas} from './classes.js';
+
+
+import {Cell,Agent, Instrument,borderCanvas} from './classes.js';
+
+
+
+
+
+function startApp(){
+
+const landingText = document.getElementById("landing_text")
+        window.addEventListener('click', function() {
+          
+          
+          Array.from(landingText.childNodes).forEach(child => {
+            document.getElementById('landing_text').classList.add("hidden");
+
+
+            if (child.nodeType === Node.ELEMENT_NODE) {
+              child.classList.add("hide");
+            }
+          });
+        });
 
 const rythms = [
   {
@@ -62,8 +84,8 @@ const canvas = document.createElement('canvas');
 canvas.setAttribute('id','mainCanvas')
 const ctx = canvas.getContext('2d');
 document.body.appendChild(canvas);
-canvas.width = window.innerWidth*pixelDensity;
-canvas.height = window.innerHeight*pixelDensity;
+borderCanvas.width = canvas.width = window.innerWidth*pixelDensity;
+borderCanvas.height = canvas.height = window.innerHeight*pixelDensity;
 const width = canvas.width;
 const height = canvas.height;
 
@@ -265,7 +287,6 @@ window.addEventListener('keydown', (e) => {
 });
 
 canvas.addEventListener('mousedown', (e) => {
-   document.documentElement.requestFullscreen?.();
   mousePosA = getMousePos(e);
   canvas.addEventListener('mousemove', onMouseMove);
   canvas.addEventListener('mouseup', () => {
@@ -274,7 +295,6 @@ canvas.addEventListener('mousedown', (e) => {
 });
 
 canvas.addEventListener('touchstart', (e) => {
-  document.documentElement.requestFullscreen?.();
   if (e.touches.length > 0) {
     const touch = e.touches[0];
     mousePosA = getMousePos(touch);
@@ -570,3 +590,8 @@ window.addEventListener('buttonPressed', (event) => {
   }
 }
 );
+
+}
+
+
+export {startApp}

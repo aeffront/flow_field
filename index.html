@@ -14,28 +14,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
+  <button id="fullscreen_button" style="position: absolute; top: 10px; right: 10px; z-index: 1000;">Fullscreen</button>
   <script src="./src/listenner.js" ></script>
   <div id="landing_text" >
     <h1 id="title_1">MUSICAL AGENT</h1>
     <h1 id="title_2">MUSICAL AGENT</h1>
     <p>Press h for help</p>
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        const landingText = document.getElementById("landing_text")
-        window.addEventListener('click', function() {
-          
-          Array.from(landingText.childNodes).forEach(child => {
-            document.getElementById('landing_text').classList.add("hidden");
-
-
-            if (child.nodeType === Node.ELEMENT_NODE) {
-              child.classList.add("hide");
-            }
-          });
-        });
-        
-      });
-    </script>
+   
   </div>
   
   
@@ -85,17 +70,38 @@
       </tr>
     </table>
     
-    <script>
+    <script type="module">
+      import {startApp} from './src/main6.js';
       document.addEventListener("DOMContentLoaded", function() {
         const keysTitle = document.getElementById("keys_title")
         const keys_table = document.getElementById("keys_table")
         keysTitle.addEventListener('click', function() {
           keys_table.classList.toggle("hidden");
         });
+
+        // Add a click event to trigger fullscreen
+        fullscreen_button.addEventListener('click', function handleFullscreen() {
+          if (document.fullscreenElement) return;
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().then(() => {
+            startApp();
+          });
+          } else if (document.documentElement.webkitRequestFullscreen) { // Safari
+            document.documentElement.webkitRequestFullscreen().then(() => {
+            startApp();
+          });
+          } else if (document.documentElement.msRequestFullscreen) { // IE11
+            document.documentElement.msRequestFullscreen().then(() => {
+            startApp();
+          });
+          }
+          // Remove this event after first use
+          document.body.removeEventListener('click', handleFullscreen);
+          
+        }, { once: true });
         
       });
     </script>
   </div>
-  <script src="./src/main6.js" type="module"></script>
 </body>
 </html>
