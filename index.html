@@ -84,15 +84,19 @@
           if (document.fullscreenElement) return;
           if (document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().then(() => {
+              fullscreen_button.remove();
             startApp();
           });
           } else if (document.documentElement.webkitRequestFullscreen) { // Safari
             document.documentElement.webkitRequestFullscreen().then(() => {
+
+            fullscreen_button.remove()
             startApp();
           });
           } else if (document.documentElement.msRequestFullscreen) { // IE11
             document.documentElement.msRequestFullscreen().then(() => {
-            startApp();
+            fullscreen_button.remove()
+              startApp();
           });
           }
           // Remove this event after first use
