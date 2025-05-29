@@ -543,12 +543,28 @@ window.addEventListener('buttonPressed', (event) => {
     startAudio();
   }
   else if (button === 'button5') {
-    document.getElementById('instrument_selector').value = "Vox";
-    if (Tone.Transport.state === 'started') {
-      stopAudio();
-    } 
-    createAgent();
-    startAudio();
+    stopAudio();
+      const agentElement = document.querySelector('.agent');
+      if (agentElement) {
+        document.body.removeChild(agentElement);
+      }
+      type = Math.floor(Math.random() * numInstrumentTypes);
+      agents.forEach(agent => {
+        agent.animation.destroy();
+      });
+      agents = [];
+      cells.forEach(row => row.forEach(cell => {
+        cell.vx = 0;
+        cell.vy = 0;
+      }));
+
+      ctx.clearRect(0, 0, width, height);
+      let borderCtx = borderCanvas.getContext('2d');
+      borderCtx.clearRect(0, 0, width, height);
+
+      type = Math.floor(Math.random() * numInstrumentTypes);
+      colors = palets[Math.floor(Math.random() * palets.length)];
+      
   }
 }
 );
