@@ -265,6 +265,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 canvas.addEventListener('mousedown', (e) => {
+   document.documentElement.requestFullscreen?.();
   mousePosA = getMousePos(e);
   canvas.addEventListener('mousemove', onMouseMove);
   canvas.addEventListener('mouseup', () => {
@@ -273,6 +274,7 @@ canvas.addEventListener('mousedown', (e) => {
 });
 
 canvas.addEventListener('touchstart', (e) => {
+  document.documentElement.requestFullscreen?.();
   if (e.touches.length > 0) {
     const touch = e.touches[0];
     mousePosA = getMousePos(touch);
