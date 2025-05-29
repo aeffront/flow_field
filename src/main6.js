@@ -1,7 +1,7 @@
 // Refactored version of your code
-import * as Tone from 'tone';
+// import * as Tone from 'tone';
 
-import {Cell,Agent, Instrument,lofiOutput} from './classes.js';
+import {Cell,Agent, Instrument,lofiOutput,borderCanvas} from './classes.js';
 
 const rythms = [
   {
@@ -27,21 +27,21 @@ let numInstrumentTypes = 3;
 let type = Math.floor(Math.random() * numInstrumentTypes);
 let percussionsIsMute = true;
 
-const kickPlayer = new Tone.Player('./public/lofi_samples/kick.wav').connect(lofiOutput.input);
-const snarePlayer = new Tone.Player('./public/lofi_samples/snare.wav').connect(lofiOutput.input);
-const hihatPlayer = new Tone.Player('./public/lofi_samples/hh.wav').connect(lofiOutput.input);
+const drumBuss = new Tone.Gain(0.4).toDestination();
+
+const kickPlayer = new Tone.Player('./public/lofi_samples/kick.wav').connect(drumBuss);
+const snarePlayer = new Tone.Player('./public/lofi_samples/snare.wav').connect(drumBuss);
+const hihatPlayer = new Tone.Player('./public/lofi_samples/hh.wav').connect(drumBuss);
 
 kickPlayer.mute = percussionsIsMute;
 snarePlayer.mute = percussionsIsMute;
 hihatPlayer.mute = percussionsIsMute;
 
-const definition = 50*pixelDensity;
+const definition = 20*pixelDensity;
 const notes = [
+  ['C1','Db1', 'Eb1', 'F1', 'Gb1', 'Ab1', 'Bb1'],
   ['C2','Db2', 'Eb2', 'F2', 'Gb2', 'Ab2', 'Bb2'],
   ['C3','Db3', 'Eb3', 'F3', 'Gb3', 'Ab3', 'Bb3'],
-  ['C4','Db4', 'Eb4', 'F4', 'Gb4', 'Ab4', 'Bb4'],
-  ['C5','Db5', 'Eb5', 'F5', 'Gb5', 'Ab5', 'Bb5'],
-  ['C6','Db6', 'Eb6', 'F6', 'Gb6', 'Ab6', 'Bb6']
 ];
 const isConstant = false;
 const penIsActive = true;
@@ -59,6 +59,7 @@ let colors = palets[Math.floor(Math.random() * palets.length)];
 
 
 const canvas = document.createElement('canvas');
+canvas.setAttribute('id','mainCanvas')
 const ctx = canvas.getContext('2d');
 document.body.appendChild(canvas);
 canvas.width = window.innerWidth*pixelDensity;
@@ -96,7 +97,8 @@ function buildField() {
   for (let i = 0; i < numCols; i++) {
     let row = [];
     for (let j = 0; j < numRows; j++) {
-      row.push(new Cell(i,j,i * definition, j * definition, isConstant ? 1 : 0, 0,restWidth, restHeight, definition, colors));
+      row.push(new Cell(i,j,i * definition, j * definition, 0, 0,restWidth, restHeight, definition, colors));
+      
     }
     cells.push(row);
   }
@@ -111,11 +113,16 @@ function createAgent(){
   let randomOctave = Math.floor(Math.random() * 2) - 4;
   let randomType = type;
 
-  let agent = new Agent(cells, null, definition, numCols, numRows);
+  let instrument =  new Instrument(randomType, randomTimeSignature, randomOctave,null);
+  instrument.playedNotes = [];
+
+  let agent = new Agent(cells, instrument, definition, numCols, numRows);
+  instrument.agent = agent;
   agent.x = globalMousePos.x;
   agent.y = globalMousePos.y;
-  agent.instrument = new Instrument(randomType, randomTimeSignature, randomOctave,agent);
   agents.push(agent);
+
+  return agent;
 
 }
 
@@ -131,7 +138,6 @@ function getMouseDirection() {
 
   const magnitude = Math.sqrt(vx * vx + vy * vy);
 
-  console.log(vx, vy, magnitude);
   return {
     vx: magnitude > 0 ? vx / magnitude : 0,
     vy: magnitude > 0 ? vy / magnitude : 0
@@ -149,8 +155,10 @@ function onMouseMove(e) {
   const { vx, vy } = getMouseDirection();
   let x = Math.floor(mousePosA.x / definition);
   let y = Math.floor(mousePosA.y / definition);
-  for (let i = -1; i <= 1; i++) {
-    for (let j = -1; j <= 1; j++) {
+
+  let penSize = 2;
+  for (let i = -penSize; i <= penSize; i++) {
+    for (let j = -penSize; j <= penSize; j++) {
       if (cells[x + i] && cells[x + i][y + j]) {
 
         let signX = Math.sign(vx);
@@ -159,38 +167,84 @@ function onMouseMove(e) {
         let valX = Math.round(vx);
         let valY = Math.round(vy);
 
-        valX = valX === 0 ? signX : valX;
-        valY = valY === 0 ? signY : valY;
+        valX = valX === 0 ? valX : signX;
+        valY = valY === 0 ? valY : signY;
 
 
         cells[x + i][y + j].vx = valX;
         cells[x + i][y + j].vy = valY;
+
+       
+      }
+      if(i == -penSize){
+        cells[x + i][y + j].borderLeft = true;
+
+        if(j == -penSize){
+          cells[x + i][y + j].borderTop = true;
+        }
+        if(j == penSize-1){
+          cells[x + i][y + j].borderBottom = true;
+        }
+      }
+      else if(i == penSize-1){
+        cells[x + i][y + j].borderRight = true;
+
+        if(j == -penSize){
+          cells[x + i][y + j].borderTop = true;
+        }
+        if(j == penSize-1){
+          cells[x + i][y + j].borderBottom = true;
+        }
+      }
+      else if(j == -penSize){
+        cells[x + i][y + j].borderTop = true;
+        if(i == -penSize){
+          cells[x + i][y + j].borderLeft = true;
+        }
+        if(i == penSize-1){
+          cells[x + i][y + j].borderRight = true;
+        }
+      }
+      else if(j == penSize-1){
+        cells[x + i][y + j].borderBottom = true;
+        if(i == -penSize){
+          cells[x + i][y + j].borderLeft = true;
+        }
+        if(i == penSize-1){
+          cells[x + i][y + j].borderRight = true;
+        }
+      }
+      else{
+        cells[x + i][y + j].borderTop = false;
+        cells[x + i][y + j].borderBottom = false;
+        cells[x + i][y + j].borderLeft = false;
+        cells[x + i][y + j].borderRight = false;
       }
     }
   }
 }
-
-canvas.addEventListener('mousedown', (e) => {
-  mousePosA = getMousePos(e);
-  canvas.addEventListener('mousemove', onMouseMove);
-  canvas.addEventListener('mouseup', () => {
-    canvas.removeEventListener('mousemove', onMouseMove);
-  });
-});
-
 canvas.addEventListener('dblclick', (e) => {
-  mousePosA = getMousePos(e);
-  const { vx, vy } = { vx: 0, vy: 0 }; // Reset direction
-  let x = Math.floor(mousePosA.x / definition);
-  let y = Math.floor(mousePosA.y / definition);
-  for (let i = -1; i <= 1; i++) {
-    for (let j = -1; j <= 1; j++) {
-      if (cells[x + i] && cells[x + i][y + j]) {
-        cells[x + i][y + j].vx = vx;
-        cells[x + i][y + j].vy = vy;
-      }
-    }
-  }
+  // mousePosA = getMousePos(e);
+  // const { vx, vy } = { vx: 0, vy: 0 }; // Reset direction
+  // let x = Math.floor(mousePosA.x / definition);
+  // let y = Math.floor(mousePosA.y / definition);
+  // for (let i = -1; i <= 1; i++) {
+  //   for (let j = -1; j <= 1; j++) {
+  //     if (cells[x + i] && cells[x + i][y + j]) {
+  //       cells[x + i][y + j].vx = vx;
+  //       cells[x + i][y + j].vy = vy;
+  //     }
+  //   }
+  // }
+
+
+
+   document.getElementById('instrument_selector').value = "FX";
+   if (Tone.Transport.state === 'started') {
+      stopAudio();
+    } 
+    createAgent();
+    startAudio();
 });
 
 window.addEventListener('keydown', (e) => {
@@ -210,9 +264,41 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-window.addEventListener('mousemove',(e)=>{
+canvas.addEventListener('mousedown', (e) => {
+  mousePosA = getMousePos(e);
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseup', () => {
+    canvas.removeEventListener('mousemove', onMouseMove);
+  });
+});
+
+canvas.addEventListener('touchstart', (e) => {
+  if (e.touches.length > 0) {
+    const touch = e.touches[0];
+    mousePosA = getMousePos(touch);
+    const touchMoveHandler = (moveEvent) => {
+      if (moveEvent.touches.length > 0) {
+        onMouseMove(moveEvent.touches[0]);
+      }
+    };
+    const touchEndHandler = () => {
+      canvas.removeEventListener('touchmove', touchMoveHandler);
+      canvas.removeEventListener('touchend', touchEndHandler);
+    };
+    canvas.addEventListener('touchmove', touchMoveHandler);
+    canvas.addEventListener('touchend', touchEndHandler);
+  }
+}, { passive: false });
+
+window.addEventListener('mousemove', (e) => {
   globalMousePos = getMousePos(e);
-})
+});
+
+window.addEventListener('touchmove', (e) => {
+  if (e.touches.length > 0) {
+    globalMousePos = getMousePos(e.touches[0]);
+  }
+}, { passive: false });
 
 // ---------------------------- Animation ----------------------------
 function damp() {
@@ -226,8 +312,18 @@ function draw() {
   ctx.clearRect(0, 0, width, height);
   cells.forEach(row => row.forEach(cell => cell.draw(ctx,debug,definition,colors)));
   agents.forEach(agent => {
+    
+    if(agent.delete){
+      console.log("deleting agent");
+      agents.splice(agents.indexOf(agent), 1);
+      Tone.Transport.clear(agent.sequencer);
+      agent.instrument.sampler.disconnect();
+      agent.animation.destroy();
+      agent = null;
+      return;
+    }
     agent.update();
-    agent.draw(ctx);
+    
   });
 }
 
@@ -246,22 +342,32 @@ function main() {
 
 // ---------------------------- Audio Start ----------------------------
 function startAudio() {
+  console.log("starting audio");
   Tone.start();
+  Tone.Transport.bpm.value = 130;
   Tone.Transport.start();
-  Tone.Transport.cancel();
+
   agents.forEach(agent => {
-    Tone.Transport.scheduleRepeat(() => agent.play(notes), agent.instrument.noteLength);
+  agent.sequencer = Tone.Transport.scheduleRepeat((time) => {
+    agent.play(notes, time);
+    console.log("playing")
+  }, agent.instrument.noteLength); // make sure noteLength is a string like "4n", "8n", etc.
+});
+   
+console.log("Scheduled agents:", agents.length);
+  agents.forEach(agent => {
+    console.log(agent.instrument.playedNotes.length +" : after after");
+    agent.instrument.playedNotes = [];
   });
-  Tone.Transport.swing = 0.;
-  Tone.Transport.swingSubdivision = '16n';
   main();
   window.removeEventListener('click', startAudio);
 
   let pattern = getRandomRythm();
 
-  let kickPattern = pattern.kickPattern;
-  let snarePattern= pattern.snarePattern;
-  let hihatPattern= pattern.hihatPattern;
+  let kickPattern = [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0];
+  let snarePattern = [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0];
+  let hihatPattern = [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1];
+
   let step = 0;
 
   Tone.Transport.scheduleRepeat(() => {
@@ -318,6 +424,9 @@ window.addEventListener('keydown', (e) => {
       }));
 
       ctx.clearRect(0, 0, width, height);
+      let borderCtx = borderCanvas.getContext('2d');
+      borderCtx.clearRect(0, 0, width, height);
+
       type = Math.floor(Math.random() * numInstrumentTypes);
       colors = palets[Math.floor(Math.random() * palets.length)];
       
@@ -348,3 +457,98 @@ window.addEventListener('keydown', (e) => {
   }
 
 });
+
+function removeAgent(agent){
+  agent.delete = true;
+  agent.animation.destroy();
+  agents.splice(agents.indexOf(agent), 1);
+}
+
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === '&') {
+    document.getElementById('instrument_selector').value = "FX";
+   if (Tone.Transport.state === 'started') {
+      stopAudio();
+    } 
+    createAgent();
+    startAudio();
+  }
+  else if (e.key === 'é') {
+    document.getElementById('instrument_selector').value = "Pluck";
+    if (Tone.Transport.state === 'started') {
+      stopAudio();
+    } 
+    createAgent();
+    startAudio();
+  }
+  else if (e.key === '"') {
+    document.getElementById('instrument_selector').value = "Pad";
+   if (Tone.Transport.state === 'started') {
+      stopAudio();
+    } 
+    createAgent();
+    startAudio();
+  }
+  else if (e.key === "'") {
+    document.getElementById('instrument_selector').value = "Bass";
+   if (Tone.Transport.state === 'started') {
+      stopAudio();
+    } 
+    createAgent();
+    startAudio();
+  }
+  else if (e.key === '(') {
+    document.getElementById('instrument_selector').value = "Vox";
+   if (Tone.Transport.state === 'started') {
+      stopAudio();
+    } 
+    createAgent();
+    startAudio();
+  }
+});
+
+window.addEventListener('buttonPressed', (event) => {
+
+  const button = event.detail;
+  console.log(`Button pressed: ${button}`);
+  if (button === 'button1') {
+    document.getElementById('instrument_selector').value = "FX";
+    if (Tone.Transport.state === 'started') {
+      stopAudio();
+    } 
+    createAgent();
+    startAudio();
+  } else if (button === 'button2') {
+    document.getElementById('instrument_selector').value = "Pluck";
+    if (Tone.Transport.state === 'started') {
+      stopAudio();
+    }
+    createAgent();
+    startAudio();
+  }
+  else if (button === 'button3') {
+    document.getElementById('instrument_selector').value = "Pad";
+    if (Tone.Transport.state === 'started') {
+      stopAudio();
+    } 
+    createAgent();
+    startAudio();
+  } else if (button === 'button4') {
+    document.getElementById('instrument_selector').value = "Bass";
+    if (Tone.Transport.state === 'started') {
+      stopAudio();
+    }
+    createAgent();  
+    startAudio();
+  }
+  else if (button === 'button5') {
+    document.getElementById('instrument_selector').value = "Vox";
+    if (Tone.Transport.state === 'started') {
+      stopAudio();
+    } 
+    createAgent();
+    startAudio();
+  }
+}
+);

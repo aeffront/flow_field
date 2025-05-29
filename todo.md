@@ -16,3 +16,8 @@
 - rendre le flow field plus compréhensible
 - agent répétitif => auto-delete
 - noyer les sons sharp
+
+  23.05.25
+
+- design viduel des agents
+- son , design des instruments , avoir des instruments qui matchent

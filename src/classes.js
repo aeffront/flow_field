@@ -1,5 +1,21 @@
-import * as Tone from 'tone';
-import bodymovin from 'lottie-web';
+// import * as Tone from 'tone';
+// import bodymovin from 'lottie-web';
+
+const borderCanvas = document.createElement('canvas');
+borderCanvas.width = window.innerWidth*2;
+borderCanvas.height = window.innerHeight*2;
+const borderCtx = borderCanvas.getContext('2d');
+borderCanvas.setAttribute('id', 'borderCanvas');
+document.body.appendChild(borderCanvas);
+
+
+
+
+
+
+const master = new Tone.Gain(1).toDestination();
+
+
 
 class LoFiVinyl {
   constructor() {
@@ -42,7 +58,7 @@ class LoFiVinyl {
 
     // Routing audio
     this.input.chain(lowpass, highpass, this.pitchShift,this.reverb, this.output);
-    this.output.toDestination();
+    this.output.connect(master);
   }
 
   connect(destination) {
@@ -65,8 +81,13 @@ class LoFiVinyl {
   }
 }
 
+let colorRight = 'rgb(255, 0, 234)';
+let colorLeft = 'rgb(0, 229, 255)';
+let colorTop = 'rgb(255, 255, 255)';
+let colorBottom = 'rgb(229, 255, 0)';
 
 
+let repeatLimit = 8;
 
 const lofiOutput = new LoFiVinyl();
 
@@ -79,21 +100,25 @@ class Cell {
     this.y = y+restHeight / 2;
     this.vx = vx;
     this.vy = vy;
+    this.sizeFactor = 1;
+    this.speed = 0.01;
+    this.borderTop = false;
+    this.borderBottom = false;
+    this.borderLeft = false;
+    this.borderRight = false;
 
     this.img = new Image();
     this.img.src = './public/cursor.png';
   }
 
   draw(ctx,debug = false,definition,colors) {
-
-    if(debug){
-    const hue = this.vx === 1 ? 120 : this.vx === -1 ? 0 : 60;
-    const sat = this.vy === 1 ? 100 : this.vy === -1 ? 0 : 50;
-
     
 
+    if(debug){
+      borderCanvas.style.display = 'none';
+
     ctx.beginPath();
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.strokeStyle = 'rgba(47, 9, 9, 0.3)';
     ctx.strokeRect(this.x, this.y, definition, definition);
     ctx.closePath();
 
@@ -106,71 +131,111 @@ class Cell {
     ctx.closePath();
     }
     else{
+      borderCanvas.style.display = 'block';
+      if(this.vx != 0 || this.vy != 0){
+        borderCtx.fillStyle = "black"
+        let extra= 10;
+        borderCtx.fillRect(this.x-extra, this.y-extra, definition+(extra*2), definition+(extra*2));
+      }
 
       if(this.vx == 0 && this.vy == 0){
-        ctx.fillStyle = 'white';
-        ctx.fillRect(this.x, this.y, definition, definition);
+        // ctx.fillStyle = 'white';
+        // ctx.fillRect(this.x, this.y, definition, definition);
       }
       if(this.vx==1){
-        ctx.fillStyle = 'rgb(0, 189, 0)';
+        ctx.fillStyle = colorRight;
         ctx.fillRect(this.x, this.y, definition, definition);
 
         if(this.vy == 1){
-        ctx.fillStyle = 'grey';
-        ctx.fillRect(this.x, this.y, definition/2, definition/2);
-        ctx.fillRect(this.x+definition/2, this.y+definition/2, definition/2, definition/2);
+          this.sizeFactor = (Math.sin((Date.now()* this.speed)-this.u*0.7)*0.5+1)*0.5*(Math.sin((Date.now()* this.speed)-this.v*0.7)*0.5+1);
+        ctx.fillStyle = colorTop
+        const scaledSize = (definition / 2) * this.sizeFactor;
+        const offset = (definition / 2 - scaledSize) / 2;
+
+        ctx.fillRect(this.x + offset, this.y + offset, scaledSize, scaledSize);
+        ctx.fillRect(this.x + definition / 2 + offset, this.y + definition / 2 + offset, scaledSize, scaledSize);
+        
+
         }else if(this.vy == -1){
-          ctx.fillStyle = 'black';
-          ctx.fillRect(this.x, this.y, definition/2, definition/2);
-          ctx.fillRect(this.x+definition/2, this.y+definition/2, definition/2, definition/2);
+          this.sizeFactor = (Math.sin((Date.now()* this.speed)-this.u*0.7)*0.5+1)*0.5*(Math.sin((Date.now()* this.speed)+this.v*0.7)*0.5+1);
+          ctx.fillStyle = colorBottom;
+          const scaledSize = (definition / 2) * this.sizeFactor;
+          const offset = (definition / 2 - scaledSize) / 2;
+
+          ctx.fillRect(this.x + offset, this.y + offset, scaledSize, scaledSize);
+          ctx.fillRect(this.x + definition / 2 + offset, this.y + definition / 2 + offset, scaledSize, scaledSize);
+
+        }else if(this.vy == 0){
+          ctx.clearRect(this.x, this.y, definition, definition);
+          ctx.fillStyle = colorRight;
+           this.sizeFactor = (Math.sin((Date.now()* this.speed)-this.u*0.7)*0.5+1)*0.5;
+          const scaledSize = (definition / 2) * this.sizeFactor;
+          const offset = (definition / 2 - scaledSize) / 2;
+          ctx.fillRect(this.x + offset, this.y + offset, scaledSize, scaledSize);
+          ctx.fillRect(this.x + definition / 2 + offset, this.y + definition / 2 + offset, scaledSize, scaledSize);
         }
        
       }
       else if(this.vx==-1){
-        ctx.fillStyle = 'rgb(226, 138, 79)';
+        ctx.fillStyle = colorLeft;
         ctx.fillRect(this.x, this.y, definition, definition);
         if(this.vy == 1){
-          ctx.fillStyle = 'rgb(125, 125, 125)';
-          ctx.fillRect(this.x, this.y, definition/2, definition/2);
-          ctx.fillRect(this.x+definition/2, this.y+definition/2, definition/2, definition/2);
+
+            this.sizeFactor = (Math.sin((Date.now()* this.speed)+this.u*0.7)*0.5+1)*0.5*(Math.sin((Date.now()* this.speed)-this.v*0.7)*0.5+1);
+            ctx.fillStyle = colorTop;
+            const scaledSize = (definition / 2) * this.sizeFactor;
+            const offset = (definition / 2 - scaledSize) / 2;
+
+            ctx.fillRect(this.x + offset, this.y + offset, scaledSize, scaledSize);
+            ctx.fillRect(this.x + definition / 2 + offset, this.y + definition / 2 + offset, scaledSize, scaledSize);
+
         }else if(this.vy == -1){
-          ctx.fillStyle = 'rgb(0, 0, 0)';
-          ctx.fillRect(this.x, this.y, definition/2, definition/2);
-          ctx.fillRect(this.x+definition/2, this.y+definition/2, definition/2, definition/2);
+          this.sizeFactor = (Math.sin((Date.now()* this.speed)+this.u*0.7)*0.5+1)*0.5*(Math.sin((Date.now()* this.speed)+this.v*0.7)*0.5+1);
+            ctx.fillStyle = colorBottom
+            const scaledSize = (definition / 2) * this.sizeFactor;
+            const offset = (definition / 2 - scaledSize) / 2;
+
+            ctx.fillRect(this.x + offset, this.y + offset, scaledSize, scaledSize);
+            ctx.fillRect(this.x + definition / 2 + offset, this.y + definition / 2 + offset, scaledSize, scaledSize);
+
+        }else if(this.vy == 0){
+          ctx.clearRect(this.x, this.y, definition, definition);
+          ctx.fillStyle = colorLeft;
+         this.sizeFactor = (Math.sin((Date.now()* this.speed)+this.u*0.7)*0.5+1)*0.5;
+          const scaledSize = (definition / 2) * this.sizeFactor;
+          const offset = (definition / 2 - scaledSize) / 2;
+          ctx.fillRect(this.x + offset, this.y + offset, scaledSize, scaledSize);
+          ctx.fillRect(this.x + definition / 2 + offset, this.y + definition / 2 + offset, scaledSize, scaledSize);
         }
        
       }
       else if(this.vx == 0 && this.vy != 0){
         if(this.vy == 1){
-          ctx.fillStyle = 'rgb(135, 135, 135)';
-          ctx.fillRect(this.x, this.y, definition, definition);
+
+            this.sizeFactor = (Math.sin((Date.now()* this.speed)-this.v*0.7)*0.5+1);
+            ctx.fillStyle = colorTop
+            const scaledSize = (definition / 2) * this.sizeFactor;
+            const offset = (definition / 2 - scaledSize) / 2;
+
+            ctx.fillRect(this.x + offset, this.y + offset, scaledSize, scaledSize);
+            ctx.fillRect(this.x + definition / 2 + offset, this.y + definition / 2 + offset, scaledSize, scaledSize);
         }
         else if(this.vy == -1){
-          ctx.fillStyle = 'rgb(0, 0, 0)';
-          ctx.fillRect(this.x, this.y, definition, definition);
-        }
-      }
 
+
+            this.sizeFactor = (Math.sin((Date.now()* this.speed)+this.v*0.7)*0.5+1);
+            ctx.fillStyle = colorBottom
+            const scaledSize = (definition / 2) * this.sizeFactor;
+            const offset = (definition / 2 - scaledSize) / 2;
+
+            ctx.fillRect(this.x + offset, this.y + offset, scaledSize, scaledSize);
+            ctx.fillRect(this.x + definition / 2 + offset, this.y + definition / 2 + offset, scaledSize, scaledSize);
+        }
 
       
-      // let colorIndex = this.vx === 1 ? 0 : this.vx === -1 ? 1 : 2;
-      // ctx.fillStyle = colors[colorIndex];
-      // if(this.vx == 0 && this.vy == 0){
-      //   ctx.fillStyle = 'white';
-      // }
-      // ctx.beginPath();
-      // ctx.roundRect(this.x, this.y, definition, definition, 0
-      // );
-      // ctx.fill();
 
-      // ctx.save();
-      // ctx.translate(this.x + definition / 2, this.y + definition / 2);
-      // if (this.vx !== 0 || this.vy !== 0) {
-      //   ctx.rotate(Math.atan2(this.vy, this.vx)+Math.PI);
-      // }
-      // //ctx.drawImage(this.img, -definition / 2, -definition / 2, definition, definition);
-      // ctx.restore();
-
+       
+      }
       
     }
   }
@@ -189,6 +254,12 @@ class Agent {
     this.closestCell;
     this.numRows = numRows;
     this.numCols = numCols;
+    this.delete = false;
+
+
+    this.sequencer;
+
+    console.log(this.instrument)
 
     // Crée une div HTML pour l'agent
     this.el = document.createElement('div');
@@ -200,6 +271,7 @@ class Agent {
       pointerEvents: 'none',
       zIndex: 10,
       transformOrigin: 'center center',
+      transform: `scale(100)`,
     });
 
     // Charge l'animation Lottie
@@ -211,8 +283,6 @@ class Agent {
       autoplay: false,
       name: "agentAnim"
     });
-
-    
 
     document.body.appendChild(this.el);
   }
@@ -236,14 +306,24 @@ class Agent {
   }
 
   update() {
+    let playedNotes = [...this.instrument.playedNotes];
+
+    if(playedNotes.length>repeatLimit){
+      this.instrument.playedNotes = playedNotes.slice(playedNotes.length-repeatLimit,playedNotes.length);
+    }
+
+    if(playedNotes.every((note) => note === playedNotes[0]) && playedNotes.length >= repeatLimit){
+      this.delete = true;
+    }
+
     let cell = this.getClosestCell();
     this.closestCell = cell;
     if (!cell) return;
 
     this.vx *= 0.95;
     this.vy *= 0.95;
-    this.vx += cell.vx * 0.4;
-    this.vy += cell.vy * 0.4;
+    this.vx += cell.vx * 0.6;
+    this.vy += cell.vy * 0.6;
 
     this.x = (this.x + this.vx + window.innerWidth*2) %  (window.innerWidth*2);
     this.y = (this.y + this.vy + window.innerHeight*2) % (window.innerHeight*2);
@@ -251,7 +331,8 @@ class Agent {
     const rotation = Math.atan2(this.vy, this.vx)+Math.PI/2; // radians
 
     // Positionne et oriente la div
-    this.el.style.transform = `translate(${this.x/2}px, ${this.y/2}px) rotate(${rotation}rad)`;
+    this.el.style.transform = `translate(${this.x/2}px, ${this.y/2}px) rotate(${rotation}rad) scale(3)`;
+    // Add a white stroke around the agent using Webkit-specific CSS
   }
 
   draw(ctx) {
@@ -278,28 +359,19 @@ class Agent {
     const clampedNote = Math.max(0, Math.min(notesPerOctave - 1, noteIndex));
     const clampedOctave = Math.max(0, Math.min(numOctaves - 1, octaveIndex));
   
-    // Debug output
-    console.log(`DEBUG: Clamped Octave: ${clampedOctave} Clamped Note: ${clampedNote} Octave Index: ${octaveIndex} Note Index: ${noteIndex}`);
+  
   
     return notes[clampedOctave][clampedNote];
   }
   
-  
-  
-  
-  
-  
-
   play(notes) {
 
     let cell = this.getClosestCell();
     this.closestCell = cell;
-    console.log(cell);
     this.animation.goToAndPlay(0, true);
     const noteIndex = Math.floor((this.x / this.definition + this.y / this.definition)) % notes.length;
 
     const note = this.getNote(notes,this.closestCell.u,this.closestCell.v)
-    console.log(note);
    
     this.instrument.play(note);
   }
@@ -309,49 +381,49 @@ class Instrument {
   constructor(type = 0, noteLength = '64n', octave = 3,agent) {
     this.agent = agent;
     this.agentColor;
-    this.type = type;
+    this.type = document.getElementById('instrument_selector').value;
     this.noteLength = noteLength;
-    this.octave = octave-10;
+    this.octave = octave-2;
+    this.playedNotes = [];
+
+    switch(document.getElementById('instrument_selector').value){
+      case "FX":
+        this.noteLength = '2n';
+        break;
+      case "Pluck":
+        this.noteLength = '8n';
+        break;
+      case "Pad":
+        this.noteLength = '2n';
+        break;
+      case "Bass":
+        this.noteLength = '1n';
+        break;
+    }
 
     this.reverb = new Tone.Reverb({ 
       decay: 10,
       preDelay: 0.01,
-      wet: 0.3
-    }).connect(lofiOutput.input);
+      wet: document.getElementById('instrument_selector').value == "Bass" ? 0.8 : 0.5,
+    }).connect(master);
 
     this.baseUrl;
-
-    // switch (this.type) {
-    //   case 0:
-    //     this.baseUrl = './public/piano_samples/';
-    //     break;
-    //   case 1:
-    //     this.baseUrl = './public/synth_samples/';
-    //     break;
-    //   default:
-    //     this.baseUrl = './public/guitare_samples/';
-    // }
-
-    console.log(document.getElementById('instrument_selector').value);
+    this.baseUrl = './public/sample/';
 
     switch (document.getElementById('instrument_selector').value) {
-      case "Piano":
-        this.baseUrl = './public/piano_samples/';
+      case "FX":
         this.agentColor = 'red';
         break;
-      case "Guitar":
-        this.baseUrl = './public/synth_samples/';
+      case "Pluck":
         this.agentColor = 'blue';
         break;
-      case "Synth":
-        this.baseUrl = './public/guitare_samples/';
+      case "Pad":
         this.agentColor = 'green';
-      case "Vox":
-        this.baseUrl = './public/vox_samples/';
-        this.agentColor = 'yellow';
+        break;
       case "Bass":
-        this.baseUrl = './public/bass_samples/';
         this.agentColor = 'purple';
+
+        break;
     }
 
     // Ensure the element and its children are loaded before modifying styles
@@ -361,6 +433,7 @@ class Instrument {
         if (shapes.length > 0) {
           shapes.forEach((shape) => {
             shape.style.fill =  this.agentColor ;
+            
           });
         } else {
           console.warn('No <path> elements found in child:', child);
@@ -368,48 +441,43 @@ class Instrument {
       });
     }, 100); // Delay to ensure elements are rendered
 
-    
 
-    console.log('Initial instrument selector value:', document.getElementById('instrument_selector').value, 'Base URL:', this.baseUrl);
-
-    document.getElementById('instrument_selector').addEventListener('change', (event) => {
-      console.log(event.target.value);
-      switch (event.target.value) {
-        case "Piano":
-          this.baseUrl = './public/piano_samples/';
-          break;
-        case "Guitar":
-          this.baseUrl = './public/synth_samples/';
-          break;
-        case "Synth":
-          this.baseUrl = './public/guitare_samples/';
-        case "Vox":
-          this.baseUrl = './public/vox_samples/'
-        case "Bass":
-          this.baseUrl = './public/bass_samples/';
-      }
-    });
+    // document.getElementById('instrument_selector').addEventListener('change', (event) => {
+    //   switch (event.target.value) {
+    //     case "Piano":
+    //       this.baseUrl = './public/piano_samples/';
+    //       break;
+    //     case "Guitar":
+    //       this.baseUrl = './public/synth_samples/';
+    //       break;
+    //     case "Synth":
+    //       this.baseUrl = './public/guitare_samples/';
+    //       break;
+    //     case "Vox":
+    //       this.baseUrl = './public/vox_samples/';
+    //       break;
+    //     case "Bass":
+    //       this.baseUrl = './public/bass_samples/';
+    //       break;
+    //   }
+    // });
 
 
     
 
     this.sampler = new Tone.Sampler({
       urls: {
-      'C1': '036_c1.wav',
-      'C2': '048_c2.wav',
-      'C3': '060_c3.wav',
-      'C4': '072_c4.wav',
-      'C5': '084_c5.wav',
-      'C6': '096_c6.wav',
+      'C1': document.getElementById('instrument_selector').value+".wav",
       },
       baseUrl: this.baseUrl,
       onload: () => {
       console.log('Sampler loaded');
+
       }
     }).connect(this.reverb);
 
     // Allow overlapping notes by enabling polyphony
-    this.sampler.maxPolyphony = 10; // Set the maximum number of simultaneous notes
+    this.sampler.maxPolyphony = 0; // Set the maximum number of simultaneous notes
     
 
     this.sampler.volume.value = -10;
@@ -421,7 +489,7 @@ class Instrument {
   }
 
   play(note) {
-
+   
     if (typeof note !== 'string' && typeof note !== 'number') {
       console.error('Invalid note:', note);
       return;
@@ -430,7 +498,13 @@ class Instrument {
     let n = typeof note === 'number' ? note + this.octave : note + this.octave;
 
     if (this.sampler.loaded) {
-      this.sampler.triggerAttackRelease(n, this.noteLength);
+       this.playedNotes.push(note);
+        this.sampler.triggerAttackRelease(n, this.noteLength);
+      
+       
+      
+
+     
     } else {
       console.warn('Sampler not loaded yet.');
     }
@@ -443,5 +517,4 @@ class Instrument {
 
 
 
-
-export {Cell, Agent, Instrument, lofiOutput};
+export {Cell, Agent, Instrument, lofiOutput,borderCanvas};

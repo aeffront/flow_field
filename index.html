@@ -7,21 +7,31 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Offside&family=Quicksand:wght@300..700&family=Rubik+Mono+One&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Special+Gothic+Expanded+One&display=swap" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="./src/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.1.5/Tone.js" integrity="sha512-5BxJJSpJ8dYoqi271NpnyjYVvd2Eyc7+EmpvZ2vjXK7Fv8UVvWPD4vFxQq0zwEhVfYvPVbv4DskFWBZBm6FaSQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js" integrity="sha512-jEnuDt6jfecCjthQAJ+ed0MTVA++5ZKmlUcmDGBv2vUI/REn6FuIdixLNnQT+vKusE2hhTk2is3cFvv5wA+Sgg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.com/libraries/bodymovin" type="text/javascript"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
-  <div id="landing_text">
-    <h1>WELCOME </h1>
+  <script src="./src/listenner.js" ></script>
+  <div id="landing_text" >
+    <h1 id="title_1">MUSICAL AGENT</h1>
+    <h1 id="title_2">MUSICAL AGENT</h1>
     <p>Press h for help</p>
     <script>
       document.addEventListener("DOMContentLoaded", function() {
         const landingText = document.getElementById("landing_text")
         window.addEventListener('click', function() {
+          
           Array.from(landingText.childNodes).forEach(child => {
+            document.getElementById('landing_text').classList.add("hidden");
+
+
             if (child.nodeType === Node.ELEMENT_NODE) {
               child.classList.add("hide");
             }
           });
-          
         });
         
       });
@@ -57,20 +67,22 @@
         <td>P : </td>
         <td>mute percussions</td>
       </tr>
+     
+
+     
+    </table>
+    <table id="instrument">
       <tr>
         <td>Instrument : </td>
         <td>
           <select id="instrument_selector" >
-          <option value="Piano">Piano</option>
-          <option value="Guitar">Guitar</option>
-          <option value="Synth">Synth</option>
-          <option value="Vox">Vox</option>
+          <option value="FX">FX</option>
+          <option value="Pluck">Pluck</option>
+          <option value="Pad">Pad</option>
           <option value="Bass">Bass</option>
         </select>
       </td>
       </tr>
-
-     
     </table>
     
     <script>
