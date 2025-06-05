@@ -14,6 +14,8 @@ html, body {
     overflow: hidden;
     height: 100%;
     width: 100%;
+
+
 }
 
 .offside-regular {
@@ -36,12 +38,13 @@ canvas{
 #borderCanvas{
     z-index: 5;
 
+
 }
 
 #mainCanvas{
     z-index: 10;
     background-color: none;
-    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 1));
+   
 }
 
 button{
@@ -69,6 +72,7 @@ button{
     left: 0;
     width: 100vw;
     height: 100vh;
+   
     
 
 
@@ -78,35 +82,40 @@ button{
     margin:0 ;
     padding:0 ;
     position: fixed;
-    top: 10vh;
-    left:10vh;
+    top: 2vh;
+    left:2vh;
     /* transform: translate(-50%, -50%); */
     width: 100%;
     height: 100%;
-        font-family: "Arial", sans-serif;
+      
 
   font-weight: 1000;
   font-style: normal;
-      font-size: 10vw;
     pointer-events: none;
     font-stretch: condensed;
-    letter-spacing: -20px;
+   
     opacity: 1;
-
+ 
    
 
 }
 
 #landing_text{
+    font-size: 8vh;
+    line-height: 15vh;
+font-family: "akzidenz-grotesk-next-pro", sans-serif;
+font-weight: 400;
+font-style: normal;
      #title_1{
-        color: rgb(0, 234, 255);
-        z-index: 2;
+        
+        color: rgb(133, 134, 122);
+        z-index: 1001;
     }
 
     #title_2{
 
-     z-index: 1;
-   -webkit-text-stroke: 10px black;
+      z-index: 400;
+   -webkit-text-stroke: 5px black;
     }
 }
 
@@ -128,6 +137,7 @@ button{
       z-index: 1000;
       font-size: 1.5vw;
       pointer-events: none;
+      display: none;
   
       
     
@@ -313,6 +323,12 @@ body {
     font-family: 'SF Mono', monospace;
 }
 
+
+.agent{
+    background-color: seagreen;
+    border-radius: 20px;
+    border: 3px solid black;
+}
 
 
 

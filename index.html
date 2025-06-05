@@ -3,6 +3,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
+  <link rel="stylesheet" href="https://use.typekit.net/xib0umx.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Offside&family=Quicksand:wght@300..700&family=Rubik+Mono+One&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Special+Gothic+Expanded+One&display=swap" rel="stylesheet">
@@ -14,11 +15,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
-  <button id="fullscreen_button" style="position: absolute; top: 10px; right: 10px; z-index: 1000;">Fullscreen</button>
+  
   <script src="./src/listenner.js" ></script>
   <div id="landing_text" >
-    <h1 id="title_1">MUSICAL AGENT</h1>
-    <h1 id="title_2">MUSICAL AGENT</h1>
+    <h1 id="title_1">VECTOR <br>FIELD</h1>
+    <h1 id="title_2">VECTOR <br>FIELD</h1>
     <p>Press h for help</p>
    
   </div>
@@ -72,39 +73,7 @@
     
     <script type="module">
       import {startApp} from './src/main6.js';
-      document.addEventListener("DOMContentLoaded", function() {
-        const keysTitle = document.getElementById("keys_title")
-        const keys_table = document.getElementById("keys_table")
-        keysTitle.addEventListener('click', function() {
-          keys_table.classList.toggle("hidden");
-        });
-
-        // Add a click event to trigger fullscreen
-        fullscreen_button.addEventListener('click', function handleFullscreen() {
-          if (document.fullscreenElement) return;
-          if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen().then(() => {
-              fullscreen_button.remove();
-            startApp();
-          });
-          } else if (document.documentElement.webkitRequestFullscreen) { // Safari
-            document.documentElement.webkitRequestFullscreen().then(() => {
-
-            fullscreen_button.remove()
-            startApp();
-          });
-          } else if (document.documentElement.msRequestFullscreen) { // IE11
-            document.documentElement.msRequestFullscreen().then(() => {
-            fullscreen_button.remove()
-              startApp();
-          });
-          }
-          // Remove this event after first use
-          document.body.removeEventListener('click', handleFullscreen);
-          
-        }, { once: true });
-        
-      });
+      startApp();
     </script>
   </div>
 </body>

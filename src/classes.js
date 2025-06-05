@@ -1,5 +1,22 @@
-// import * as Tone from 'tone';
-// import bodymovin from 'lottie-web';
+// import { Tone } from "tone/build/esm/core/Tone";
+
+
+let wavetable = [];
+
+fetch('./src/wavebank.json')
+  .then(response => response.json())
+  .then(data => {
+    data.forEach((waveform) => {
+       const wave = Tone.context.createPeriodicWave(waveform.real, waveform.imag, { disableNormalization: false });
+        wavetable.push(wave);
+    });
+    console.log('readyWavetable loaded', wavetable);
+  })
+  .catch(err => {
+    console.error('Failed to load wavetable.json', err);
+  });
+  
+ 
 
 const borderCanvas = document.createElement('canvas');
 borderCanvas.width = window.innerWidth*2;
@@ -12,84 +29,12 @@ document.body.appendChild(borderCanvas);
 
 
 
-
-const master = new Tone.Gain(1).toDestination();
-
-
-
-class LoFiVinyl {
-  constructor() {
-    this.input = new Tone.Gain();
-    this.output = new Tone.Gain();
-
-    // Filtres lo-fi
-    const lowpass = new Tone.Filter(8000, "lowpass");
-    const highpass = new Tone.Filter(400, "highpass");
-
-    // PitchShift avec delayTime modulable
-    this.pitchShift = new Tone.PitchShift({
-      pitch: 0,
-      windowSize: 0.1,
-      delayTime: 0.05, // valeur de base
-    });
-
-    // LFO pour simuler wow/flutter en modulant delayTime
-    this.wow = new Tone.LFO({
-      frequency: 0.2,   // très lent
-      min: 0.0,
-      max: 0.01,
-    }).start();
-
-    // setInterval(() => {
-    //   this.glitch();
-    // }
-    // , 1000);
-
-    // Modulation directe du delayTime
-    this.wow.connect(this.pitchShift.delayTime); // ✅ autorisé
-
-    this.reverb = new Tone.Reverb({
-      decay: 1,
-      preDelay: 0.01,
-      wet: 0.3,
-      highCut: 20000,
-      lowCut: 20,
-    })
-
-    // Routing audio
-    this.input.chain(lowpass, highpass, this.pitchShift,this.reverb, this.output);
-    this.output.connect(master);
-  }
-
-  connect(destination) {
-    this.output.connect(destination);
-  }
-
-  disconnect() {
-    this.output.disconnect();
-  }
-
-  glitch(){
-    setTimeout(() => {
-      this.input.gain.value = Math.random();
-      setTimeout(() => {
-        this.input.gain.value = 1;
-      }
-      , Math.random()*100);
-    }
-    , Math.random()*400);
-  }
-}
-
-let colorRight = 'rgb(255, 0, 234)';
-let colorLeft = 'rgb(0, 229, 255)';
+let colorRight = 'rgb(0, 255, 149)';
+let colorLeft = 'rgb(221, 0, 255)';
 let colorTop = 'rgb(255, 255, 255)';
-let colorBottom = 'rgb(229, 255, 0)';
+let colorBottom = 'rgb(133, 134, 122)';
 
 
-let repeatLimit = 8;
-
-const lofiOutput = new LoFiVinyl();
 
 
 class Cell {
@@ -118,15 +63,16 @@ class Cell {
       borderCanvas.style.display = 'none';
 
     ctx.beginPath();
+    ctx.lineWidth = 1;
     ctx.strokeStyle = 'rgba(47, 9, 9, 0.3)';
     ctx.strokeRect(this.x, this.y, definition, definition);
     ctx.closePath();
 
     ctx.beginPath();
     ctx.moveTo(this.x + definition / 2, this.y + definition / 2);
-    ctx.lineTo(this.x + definition / 2 + this.vx * 10, this.y + definition / 2 + this.vy * 10);
+    ctx.lineTo(this.x + definition / 2 + this.vx * definition / 2, this.y + definition / 2 + this.vy * definition / 2);
     ctx.strokeStyle = 'black';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 5;
     ctx.stroke();
     ctx.closePath();
     }
@@ -274,15 +220,9 @@ class Agent {
       transform: `scale(100)`,
     });
 
-    // Charge l'animation Lottie
-    this.animation = bodymovin.loadAnimation({
-      container: this.el,
-      path: './public/data.json',
-      renderer: 'svg', // <-- IMPORTANT: utiliser seulement 'svg' ou 'canvas' ou 'html'
-      loop: false,
-      autoplay: false,
-      name: "agentAnim"
-    });
+    this.el.classList.add("agent")
+
+    
 
     document.body.appendChild(this.el);
   }
@@ -306,105 +246,124 @@ class Agent {
   }
 
   update() {
-    let playedNotes = [...this.instrument.playedNotes];
 
-    if(playedNotes.length>repeatLimit){
-      this.instrument.playedNotes = playedNotes.slice(playedNotes.length-repeatLimit,playedNotes.length);
-    }
-
-    if(playedNotes.every((note) => note === playedNotes[0]) && playedNotes.length >= repeatLimit){
-      this.delete = true;
-    }
 
     let cell = this.getClosestCell();
     this.closestCell = cell;
     if (!cell) return;
 
-    this.vx *= 0.95;
-    this.vy *= 0.95;
-    this.vx += cell.vx * 0.6;
-    this.vy += cell.vy * 0.6;
+    this.vx *= 0.98;
+    this.vy *= 0.98;
+    this.vx += cell.vx * 0.3;
+    this.vy += cell.vy * 0.3;
 
     this.x = (this.x + this.vx + window.innerWidth*2) %  (window.innerWidth*2);
     this.y = (this.y + this.vy + window.innerHeight*2) % (window.innerHeight*2);
 
     const rotation = Math.atan2(this.vy, this.vx)+Math.PI/2; // radians
 
+    let step = 100;
+
+    // Get frequency data from the analyser and compute average
+    let freqData = new Uint8Array(this.instrument.wavetable.analyser.frequencyBinCount);
+    this.instrument.wavetable.analyser.getByteFrequencyData(freqData);
+    let audioValue = freqData.reduce((sum, value) => sum + value, 0) / freqData.length;
+
     // Positionne et oriente la div
-    this.el.style.transform = `translate(${this.x/2}px, ${this.y/2}px) rotate(${rotation}rad) scale(3)`;
+    if( audioValue > 50){
+      this.el.style.transform = `translate(${this.x/2}px, ${this.y/2}px) rotate(${rotation}rad)`;
+    
+    }
+    //this.el.style.transform = `translate(${Math.floor(this.x / step) * step / 2}px, ${Math.floor(this.y / step) * step / 2}px)`;
+    // this.el.style.transform = `rotate(${rotation}rad)`;
     // Add a white stroke around the agent using Webkit-specific CSS
+
+    this.instrument.update({x : this.x / (window.innerWidth*2),y: this.y / (window.innerHeight*2)});
+
+    if (cell.vx === 0 && cell.vy === 0) {
+      let altCell = null;
+      let minDist = Infinity;
+      for (let row of this.cells) {
+        for (let c of row) {
+          if (c.vx !== 0 || c.vy !== 0) {
+            const dx = this.x - (c.x + this.definition / 2);
+            const dy = this.y - (c.y + this.definition / 2);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < minDist) {
+              minDist = dist;
+              altCell = c;
+            }
+          }
+        }
+      }
+      if (altCell) {
+        this.vx += (altCell.x + this.definition / 2 - this.x) * 0.01;
+        this.vy += (altCell.y + this.definition / 2 - this.y) * 0.01;
+      }
+    }
   }
 
-  draw(ctx) {
-    // plus rien ici
-  }
-
-  getNote(notes, u, v) {
-    const numOctaves = notes.length;
-    const notesPerOctave = notes[0].length;
-  
-    // Normalize u and v to [0,1)
-    const uNorm = Math.max(0, Math.min(0.999999, u / this.numCols));
-    const vNorm = Math.max(0, Math.min(0.999999, v / this.numRows));
-  
-    // Each note/octave block in normalized space
-    const noteBlockWidth = 1 / notesPerOctave;
-    const octaveBlockHeight = 1 / numOctaves;
-  
-    // Map normalized coordinates to note & octave
-    const noteIndex = Math.floor(uNorm / noteBlockWidth);
-    const octaveIndex = Math.floor(vNorm / octaveBlockHeight);
-  
-    // Clamp to valid ranges
-    const clampedNote = Math.max(0, Math.min(notesPerOctave - 1, noteIndex));
-    const clampedOctave = Math.max(0, Math.min(numOctaves - 1, octaveIndex));
-  
-  
-  
-    return notes[clampedOctave][clampedNote];
-  }
-  
-  play(notes) {
-
-    let cell = this.getClosestCell();
-    this.closestCell = cell;
-    this.animation.goToAndPlay(0, true);
-    const noteIndex = Math.floor((this.x / this.definition + this.y / this.definition)) % notes.length;
-
-    const note = this.getNote(notes,this.closestCell.u,this.closestCell.v)
-   
-    this.instrument.play(note);
+  play() {
+    this.instrument.start();
   }
 }
 
 class Instrument {
+  constructor(){
+    this.wavetable = new Wavetable();
+    this.frequency = 10;
+    this.previousTime = Date.now();
+    
+  }
+  
+
+  start(){
+    this.wavetable.start(this.frequency);
+  }
+
+  update(pos){
+
+     this.wavetable.updateWaveform(pos);
+  }
+}
+
+
+
+class oldInstrument {
   constructor(type = 0, noteLength = '64n', octave = 3,agent) {
     this.agent = agent;
     this.agentColor;
     this.type = document.getElementById('instrument_selector').value;
     this.noteLength = noteLength;
-    this.octave = octave-2;
+    this.octave = this.type == "Bass" ? octave+4: octave; // Bass starts at C1
     this.playedNotes = [];
+    this.revWet = 0;
 
     switch(document.getElementById('instrument_selector').value){
       case "FX":
-        this.noteLength = '2n';
+        this.noteLength = '1n';
+        this.revWet = 0.5;
         break;
       case "Pluck":
-        this.noteLength = '8n';
+        this.noteLength = '2n';
+        this.revWet = 0.3;
         break;
       case "Pad":
         this.noteLength = '2n';
+        this.revWet = 0.7;
         break;
       case "Bass":
-        this.noteLength = '1n';
+        this.noteLength = '4n';
+        this.revWet = 0.1;
         break;
     }
+
+
 
     this.reverb = new Tone.Reverb({ 
       decay: 10,
       preDelay: 0.01,
-      wet: document.getElementById('instrument_selector').value == "Bass" ? 0.8 : 0.5,
+      wet: this.revWet,
     }).connect(master);
 
     this.baseUrl;
@@ -474,13 +433,44 @@ class Instrument {
       console.log('Sampler loaded');
 
       }
-    }).connect(this.reverb);
+    })
 
     // Allow overlapping notes by enabling polyphony
     this.sampler.maxPolyphony = 0; // Set the maximum number of simultaneous notes
+
+    if (this.type == "Bass") {
+      let filter = new Tone.Filter(400, "lowpass"); // Increased cutoff for audible bass
+      this.sampler.connect(filter);
+      filter.connect(this.reverb);
+    } else {
+      this.sampler.connect(this.reverb);
+    }
+
+    if( this.type =="Pluck" ){
+      let delay = new Tone.PingPongDelay("8n", 0.1);
+      this.sampler.connect(delay);
+      delay.connect(this.reverb);
+    }
     
 
-    this.sampler.volume.value = -10;
+    // Set sampler volume based on instrument type
+    switch (document.getElementById('instrument_selector').value) {
+      case "FX":
+      this.sampler.volume.value = -5;
+      break;
+      case "Pluck":
+      this.sampler.volume.value = -20;
+      break;
+      case "Pad":
+      this.sampler.volume.value = -20;
+      break;
+      case "Bass":
+      this.sampler.volume.value = -12;
+      break;
+      default:
+      this.sampler.volume.value = -10;
+      break;
+    }
     
 
 
@@ -514,7 +504,173 @@ class Instrument {
 
 
 
+let bassFrequency = 20;
+
+    class Wavetable {
+      constructor( sampleRate = 2048) {
+        this.agentEl;
+        
+
+        this.sampleRate = sampleRate;
+        this.pos = 0;
+        this.context = Tone.getContext().rawContext;
+        this.osc = null;
+        this.gain = null;
+
+        this.lfo = this.context.createOscillator();
+        this.lfo.type = 'square'; // LFO type
+
+        // Scale LFO output from [-1, 1] to [0, 1] using Gain and ConstantSource, then sum
+        this.lfoGain = this.context.createGain();
+        this.lfoGain.gain.value = 0.5; // scale [-1,1] to [-0.5,0.5]
+        this.lfoOffset = this.context.createConstantSource();
+        this.lfoOffset.offset.value = 0.6; // offset to [0,1]
+
+        // Create a summing node (GainNode with gain=1)
+        this.lfoSum = this.context.createGain();
+        this.lfoSum.gain.value = 1.0;
+
+        this.lfo.connect(this.lfoGain);
+        this.lfoGain.connect(this.lfoSum);
+        this.lfoOffset.connect(this.lfoSum);
+
+        // Now use this.lfoSum as the [0,1] LFO signal
+        this.lfoFrequency = null;
 
 
 
-export {Cell, Agent, Instrument, lofiOutput,borderCanvas};
+        this.delay = this.context.createDelay(0.01);
+        this.delayFeedback = this.context.createGain();
+        this.delayFilter = this.context.createBiquadFilter();
+        this.delayFilter.type = 'highpass';
+        this.delayFilter.frequency.value = 600; // Lowpass filter for delay
+        this.delay.connect(this.delayFilter);
+        this.delay.connect(this.delayFeedback);
+        this.delayFeedback.connect(this.delay);
+        this.delayFeedback.gain.value = 0.7; // Feedback gain for delay
+
+       
+       this.waveBank = wavetable;
+       this.octave;
+
+       this.frequency = bassFrequency*Math.pow(2, this.octave || 1); // Convert to A4 frequency scale
+
+       this.masterGain;
+
+       this.analyser = this.context.createAnalyser();
+      // Configure analyser for volume (amplitude) analysis
+      this.analyser.fftSize = 256; // Smaller FFT size for faster amplitude response
+      this.analyser.smoothingTimeConstant = 0.1; // Smooth amplitude changes
+      this.analyser.minDecibels = -100;
+      this.analyser.maxDecibels = 0;
+
+       
+      
+
+       
+
+   
+      }
+
+
+      start(freq = 20) {
+        if (this.osc) return;
+        const index = Math.round(this.pos * (this.waveBank.length - 1));
+        const wave = this.waveBank[index];
+
+        this.osc = this.context.createOscillator();
+        this.gain = this.context.createGain();
+        this.gain.gain.setValueAtTime(0.5, this.context.currentTime);
+
+        this.osc.setPeriodicWave(wave);
+        this.osc.frequency.setValueAtTime(freq, this.context.currentTime);
+        // Create a big reverb effect
+        const reverb = this.context.createConvolver();
+        // Generate an impulse response for a big reverb
+        const length = this.context.sampleRate * 3; // 3 seconds
+        const impulse = this.context.createBuffer(2, length, this.context.sampleRate);
+        for (let i = 0; i < 2; i++) {
+          const channel = impulse.getChannelData(i);
+          for (let j = 0; j < length; j++) {
+            // Exponential decay
+            channel[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 2.5);
+          }
+        }
+        reverb.buffer = impulse;
+        reverb.normalize = true;
+
+        // Dry/Wet mix for reverb
+        const dryWet = 0.7; // 0 = dry only, 1 = wet only
+
+        // Create dry and wet gain nodes
+        const dryGain = this.context.createGain();
+        const wetGain = this.context.createGain();
+        dryGain.gain.value = 1 - dryWet;
+        wetGain.gain.value = dryWet;
+
+        this.master = this.context.createGain();
+
+        this.lfoSum.connect(this.gain.gain);
+        this.lfo.start();
+
+        // Routing: osc -> gain -> [dry, wet] -> destination
+        this.osc.connect(this.gain);
+        this.gain.connect(this.delay).connect(dryGain);
+        this.gain.connect(this.delay).connect(reverb);
+        reverb.connect(wetGain);
+
+        // Merge dry and wet
+        dryGain.connect(this.master).connect(this.context.destination);
+        wetGain.connect(this.master).connect(this.context.destination);
+
+        this.osc.start();
+        dryGain.connect(this.analyser)
+      }
+
+      updateWaveform(pos) {
+        // Get frequency data from the analyser and log it
+        const freqData = new Uint8Array(this.analyser.frequencyBinCount);
+        this.analyser.getByteFrequencyData(freqData);
+
+        let average = freqData.reduce((sum, value) => sum + value, 0) / freqData.length;
+console.log('Analyser frequency data:', average);
+        if(average >50 ){
+            this.agentEl.style.backgroundColor = colorRight;
+            
+        }
+        else{
+            this.agentEl.style.backgroundColor = colorLeft;
+        }
+      
+  this.pos = Math.min(Math.max(pos.x, 0), 1);
+  const index = Math.round(this.pos * (this.waveBank.length - 1));
+  const wave = this.waveBank[index];
+  this.osc.frequency.setValueAtTime((bassFrequency*Math.pow(2, this.octave || 1)) + pos.y * 20, this.context.currentTime); // Adjust frequency based on y position
+
+  this.lfo.frequency.setValueAtTime(pos.y*10 , this.context.currentTime);
+
+  if (this.osc) {
+    this.osc.setPeriodicWave(wave);
+  }
+}
+
+
+      stop() {
+        if (this.osc) {
+          this.osc.stop();
+          this.osc.disconnect();
+          this.gain.disconnect();
+          this.osc = null;
+          this.gain = null;
+        }
+      }
+    }
+
+
+
+
+
+
+
+
+export {Cell, Agent, Instrument,borderCanvas};

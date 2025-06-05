@@ -1,47 +1,6 @@
-// Refactored version of your code
-// import * as Tone from 'tone';
-
 
 
 import {Cell,Agent, Instrument,borderCanvas} from './classes.js';
-
-
-
-
-
-function startApp(){
-
-const landingText = document.getElementById("landing_text")
-        window.addEventListener('click', function() {
-          
-          
-          Array.from(landingText.childNodes).forEach(child => {
-            document.getElementById('landing_text').classList.add("hidden");
-
-
-            if (child.nodeType === Node.ELEMENT_NODE) {
-              child.classList.add("hide");
-            }
-          });
-        });
-
-const rythms = [
-  {
-    kickPattern : [true, false, false, false, true, false, false, false,true, false, true, false, true, false, false, false],
-  snarePattern : [false, false, false, false, true, false, false, false,false, false, false, false, true, false, false, true],
-  hihatPattern : [true, true, true, true, true, true, true, true,true, true, true, true, true, true, true, true],
-  },
-  {
-    kickPattern : [true, false, true, false, true, false, false, false,true, false, true, false, true, false, true, true],
-  snarePattern : [false, true, false, false, false, true, false, false,false, false, false, false, true, false, false, true],
-  hihatPattern : [true, true, true, true, true, true, true, true,true, true, true, true, true, true, true, true],
-  }
-]
-
-function getRandomRythm(){
-  return rythms[Math.floor(Math.random() * rythms.length)];
-  //return rythms[1];
-}
 
 let pixelDensity = 2;
 let debug = false;
@@ -61,9 +20,8 @@ hihatPlayer.mute = percussionsIsMute;
 
 const definition = 20*pixelDensity;
 const notes = [
-  ['C1','Db1', 'Eb1', 'F1', 'Gb1', 'Ab1', 'Bb1'],
-  ['C2','Db2', 'Eb2', 'F2', 'Gb2', 'Ab2', 'Bb2'],
-  ['C3','Db3', 'Eb3', 'F3', 'Gb3', 'Ab3', 'Bb3'],
+  ['C0', 'D0', 'Eb0', 'F0', 'G0', 'Ab0', 'Bb0'],
+  ['C1', 'D1', 'Eb1', 'F1', 'G1', 'Ab1', 'Bb1'],
 ];
 const isConstant = false;
 const penIsActive = true;
@@ -92,29 +50,98 @@ const height = canvas.height;
 let numCols = Math.floor(width / definition);
 let numRows = Math.floor(height / definition);
 
-function getNote(notes,u,v){
-  let posY = Math.floor(v/numRows);
-  let posX = Math.floor(u/numCols);
-
-  let octDepth = numRows/notes.length;
-  let noteDepth = numCols/notes[0].length;
-
-  let oct = posY*octDepth;
-  let noteIndex = posX*noteDepth;
-
-  let note = notes[oct][noteIndex]
-
-  return note;
-
-}
-
 let restWidth = width % definition;
 let restHeight = height % definition;
 
 
 
+let cells = [];
+
+function buildRandomField(){
+  let cells = [];
+  for (let i = 0; i < numCols; i++) {
+    let row = [];
+    for (let j = 0; j < numRows; j++) {
+      row.push(new Cell(i, j, i * definition, j * definition, 0, 0, restWidth, restHeight, definition, colors));
+    }
+    cells.push(row);
+  }
+  return cells;
+}
+
+cells = buildRandomField();
+
+for (let i = 0; i < 100; i++) {
+  let x = Math.floor(Math.random() * numCols);
+  let y = Math.floor(Math.random() * numRows);
+
+  let normX = x / (numCols - 1);
+  let normY = y / (numRows - 1);
+  let prob = (normX + normY) / 2;
+
+  // ✅ Corrigé ici
+  if (Math.random() < prob) {
+    let { vx, vy } = { vx: (Math.random() * 2) - 1, vy: (Math.random() * 2) - 1 };
+
+    let penSize =5;
+    for (let dx = -penSize; dx <= penSize; dx++) {
+      for (let dy = -penSize; dy <= penSize; dy++) {
+        let cellX = x + dx;
+        let cellY = y + dy;
+        if (
+          cellX >= 0 && cellX < numCols &&
+          cellY >= 0 && cellY < numRows &&
+          cells[cellX] && cells[cellX][cellY]
+        ) {
+          let signX = Math.sign(vx);
+          let signY = Math.sign(vy);
+
+          let valX = Math.round(vx);
+          let valY = Math.round(vy);
+
+          valX = valX === 0 ? valX : signX;
+          valY = valY === 0 ? valY : signY;
+
+          cells[cellX][cellY].vx =cellX>numCols*0.25 &&cellY>numRows*0.3 ? valX : 0;
+          cells[cellX][cellY].vy = cellX>numCols*0.25 &&cellY>numRows*0.3 ? valX : 0;
+        }
+      }
+    }
+  }
+}
+
+
+ cells.forEach(row => row.forEach(cell => cell.draw(ctx,false,definition,colors)));
+
+
+
+function startApp(){
+
+
+ 
+
+const landingText = document.getElementById("landing_text")
+        window.addEventListener('click', function() {
+           borderCanvas.getContext('2d').clearRect(0, 0, width, height);
+          
+          
+          Array.from(landingText.childNodes).forEach(child => {
+            document.getElementById('landing_text').classList.add("hidden");
+
+
+            if (child.nodeType === Node.ELEMENT_NODE) {
+              child.classList.add("hide");
+            }
+          });
+        });
+
+
+
+
+
+
 // ---------------------------- Init Field ----------------------------
-function buildField() {
+function buildField(x,y) {
   let cells = [];
   for (let i = 0; i < numCols; i++) {
     let row = [];
@@ -127,18 +154,20 @@ function buildField() {
   return cells;
 }
 
-let cells = buildField();
+
+
+ cells = buildField();
 
 function createAgent(){
-  let timeSignatures = ['2n', '4n', '8n'];
-  let randomTimeSignature = timeSignatures[Math.floor(Math.random() * timeSignatures.length)];
-  let randomOctave = Math.floor(Math.random() * 2) - 4;
-  let randomType = type;
 
-  let instrument =  new Instrument(randomType, randomTimeSignature, randomOctave,null);
-  instrument.playedNotes = [];
+  if( agents.length >= 3){
+    agents[0].instrument.wavetable.stop();
+    removeAgent(agents[0]);
+  }
+  let instrument =  new Instrument();
 
   let agent = new Agent(cells, instrument, definition, numCols, numRows);
+  instrument.wavetable.agentEl = agent.el;
   instrument.agent = agent;
   agent.x = globalMousePos.x;
   agent.y = globalMousePos.y;
@@ -178,7 +207,7 @@ function onMouseMove(e) {
   let x = Math.floor(mousePosA.x / definition);
   let y = Math.floor(mousePosA.y / definition);
 
-  let penSize = 2;
+  let penSize = 4;
   for (let i = -penSize; i <= penSize; i++) {
     for (let j = -penSize; j <= penSize; j++) {
       if (cells[x + i] && cells[x + i][y + j]) {
@@ -245,46 +274,8 @@ function onMouseMove(e) {
     }
   }
 }
-canvas.addEventListener('dblclick', (e) => {
-  // mousePosA = getMousePos(e);
-  // const { vx, vy } = { vx: 0, vy: 0 }; // Reset direction
-  // let x = Math.floor(mousePosA.x / definition);
-  // let y = Math.floor(mousePosA.y / definition);
-  // for (let i = -1; i <= 1; i++) {
-  //   for (let j = -1; j <= 1; j++) {
-  //     if (cells[x + i] && cells[x + i][y + j]) {
-  //       cells[x + i][y + j].vx = vx;
-  //       cells[x + i][y + j].vy = vy;
-  //     }
-  //   }
-  // }
 
 
-
-   document.getElementById('instrument_selector').value = "FX";
-   if (Tone.Transport.state === 'started') {
-      stopAudio();
-    } 
-    createAgent();
-    startAudio();
-});
-
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'd') {
-    debug = !debug;
-    if (debug) {
-      canvas.style.backgroundColor = 'rgba(0,0,0,0.5)';
-    } else {
-      canvas.style.backgroundColor = '';
-    }
-  }
-  if (e.key === 'ArrowUp') {
-    dampening.factor += 0.1;
-  }
-  if (e.key === 'ArrowDown') {
-    dampening.factor -= 0.1;
-  }
-});
 
 canvas.addEventListener('mousedown', (e) => {
   mousePosA = getMousePos(e);
@@ -334,16 +325,7 @@ function draw() {
   ctx.clearRect(0, 0, width, height);
   cells.forEach(row => row.forEach(cell => cell.draw(ctx,debug,definition,colors)));
   agents.forEach(agent => {
-    
-    if(agent.delete){
-      console.log("deleting agent");
-      agents.splice(agents.indexOf(agent), 1);
-      Tone.Transport.clear(agent.sequencer);
-      agent.instrument.sampler.disconnect();
-      agent.animation.destroy();
-      agent = null;
-      return;
-    }
+
     agent.update();
     
   });
@@ -364,46 +346,22 @@ function main() {
 
 // ---------------------------- Audio Start ----------------------------
 function startAudio() {
+  
   console.log("starting audio");
   Tone.start();
   Tone.Transport.bpm.value = 130;
   Tone.Transport.start();
 
   agents.forEach(agent => {
-  agent.sequencer = Tone.Transport.scheduleRepeat((time) => {
-    agent.play(notes, time);
-    console.log("playing")
-  }, agent.instrument.noteLength); // make sure noteLength is a string like "4n", "8n", etc.
+  agent.instrument.wavetable.start();
 });
    
-console.log("Scheduled agents:", agents.length);
-  agents.forEach(agent => {
-    console.log(agent.instrument.playedNotes.length +" : after after");
-    agent.instrument.playedNotes = [];
-  });
+
   main();
   window.removeEventListener('click', startAudio);
 
-  let pattern = getRandomRythm();
+  
 
-  let kickPattern = [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0];
-  let snarePattern = [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0];
-  let hihatPattern = [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1];
-
-  let step = 0;
-
-  Tone.Transport.scheduleRepeat(() => {
-    if (kickPattern[step]) {
-      kickPlayer.start();
-    }
-    if (snarePattern[step]) {
-      snarePlayer.start();
-    }
-    if (hihatPattern[step]) {
-      hihatPlayer.start();
-    }
-    step = (step + 1) % kickPattern.length;
-  }, '8n');
 }
 
 function stopAudio() {
@@ -437,7 +395,8 @@ window.addEventListener('keydown', (e) => {
       }
       type = Math.floor(Math.random() * numInstrumentTypes);
       agents.forEach(agent => {
-        agent.animation.destroy();
+        agent.instrument.wavetable.stop();
+        agent.el.remove();
       });
       agents = [];
       cells.forEach(row => row.forEach(cell => {
@@ -478,11 +437,16 @@ window.addEventListener('keydown', (e) => {
     }
   }
 
+  if(e.key === 'd'){
+    debug = !debug;
+   
+  }
+
 });
 
 function removeAgent(agent){
   agent.delete = true;
-  agent.animation.destroy();
+  agent.el.remove();
   agents.splice(agents.indexOf(agent), 1);
 }
 
@@ -493,7 +457,8 @@ window.addEventListener('keydown', (e) => {
    if (Tone.Transport.state === 'started') {
       stopAudio();
     } 
-    createAgent();
+    let agent = createAgent();
+    agent.instrument.wavetable.octave = 0;
     startAudio();
   }
   else if (e.key === 'é') {
@@ -501,7 +466,8 @@ window.addEventListener('keydown', (e) => {
     if (Tone.Transport.state === 'started') {
       stopAudio();
     } 
-    createAgent();
+    let agent = createAgent();
+    agent.instrument.wavetable.octave = 1;
     startAudio();
   }
   else if (e.key === '"') {
@@ -509,7 +475,8 @@ window.addEventListener('keydown', (e) => {
    if (Tone.Transport.state === 'started') {
       stopAudio();
     } 
-    createAgent();
+    let agent = createAgent();
+    agent.instrument.wavetable.octave = 2;
     startAudio();
   }
   else if (e.key === "'") {
@@ -517,7 +484,8 @@ window.addEventListener('keydown', (e) => {
    if (Tone.Transport.state === 'started') {
       stopAudio();
     } 
-    createAgent();
+    let agent = createAgent();
+    agent.instrument.wavetable.octave = 3;
     startAudio();
   }
   else if (e.key === '(') {
@@ -525,7 +493,8 @@ window.addEventListener('keydown', (e) => {
    if (Tone.Transport.state === 'started') {
       stopAudio();
     } 
-    createAgent();
+    let agent = createAgent();
+    agent.instrument.wavetable.octave = 4;
     startAudio();
   }
 });
