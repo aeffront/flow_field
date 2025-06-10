@@ -62,7 +62,10 @@ function buildRandomField(){
   for (let i = 0; i < numCols; i++) {
     let row = [];
     for (let j = 0; j < numRows; j++) {
-      row.push(new Cell(i, j, i * definition, j * definition, 0, 0, restWidth, restHeight, definition, colors));
+      let val  = Math.round(Math.random() * 2);
+      
+
+      row.push(new Cell(i, j, i * definition, j * definition, val, val, restWidth, restHeight, definition, colors));
     }
     cells.push(row);
   }
@@ -71,44 +74,7 @@ function buildRandomField(){
 
 cells = buildRandomField();
 
-for (let i = 0; i < 100; i++) {
-  let x = Math.floor(Math.random() * numCols);
-  let y = Math.floor(Math.random() * numRows);
 
-  let normX = x / (numCols - 1);
-  let normY = y / (numRows - 1);
-  let prob = (normX + normY) / 2;
-
-  // ✅ Corrigé ici
-  if (Math.random() < prob) {
-    let { vx, vy } = { vx: (Math.random() * 2) - 1, vy: (Math.random() * 2) - 1 };
-
-    let penSize =5;
-    for (let dx = -penSize; dx <= penSize; dx++) {
-      for (let dy = -penSize; dy <= penSize; dy++) {
-        let cellX = x + dx;
-        let cellY = y + dy;
-        if (
-          cellX >= 0 && cellX < numCols &&
-          cellY >= 0 && cellY < numRows &&
-          cells[cellX] && cells[cellX][cellY]
-        ) {
-          let signX = Math.sign(vx);
-          let signY = Math.sign(vy);
-
-          let valX = Math.round(vx);
-          let valY = Math.round(vy);
-
-          valX = valX === 0 ? valX : signX;
-          valY = valY === 0 ? valY : signY;
-
-          cells[cellX][cellY].vx =cellX>numCols*0.25 &&cellY>numRows*0.3 ? valX : 0;
-          cells[cellX][cellY].vy = cellX>numCols*0.25 &&cellY>numRows*0.3 ? valX : 0;
-        }
-      }
-    }
-  }
-}
 
 
  cells.forEach(row => row.forEach(cell => cell.draw(ctx,false,definition,colors)));
@@ -123,10 +89,14 @@ function startApp(){
 const landingText = document.getElementById("landing_text")
         window.addEventListener('click', function() {
            borderCanvas.getContext('2d').clearRect(0, 0, width, height);
+
+          this.document.getElementById('landing_text').classList.add("hide");
+
           
           
           Array.from(landingText.childNodes).forEach(child => {
             document.getElementById('landing_text').classList.add("hidden");
+            
 
 
             if (child.nodeType === Node.ELEMENT_NODE) {
