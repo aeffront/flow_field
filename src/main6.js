@@ -65,7 +65,7 @@ function buildRandomField(){
       let val  = Math.round(Math.random() * 2);
       
 
-      row.push(new Cell(i, j, i * definition, j * definition, val, val, restWidth, restHeight, definition, colors));
+      row.push(new Cell(i, j, i * definition, j * definition, 1, 1, restWidth, restHeight, definition, colors));
     }
     cells.push(row);
   }
